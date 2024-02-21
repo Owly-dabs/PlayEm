@@ -1,13 +1,11 @@
 package com.example.playem;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface PermissionHandlerDelegate {
-    public void RegisterRequests(PermissionsHandle resolution);
+    void RegisterRequests(PermissionsHandle resolution);
 //Interface is is only responsible for permission status resolution. API calls does not initiate a permissions request.
 //Apps should initiate their permission request through ContextCompact
     HashMap<String,PermissionsHandle> pending = new HashMap<>();
-    public void DeregisterRequests(String permissions);
+    void DeregisterRequests(String permissions);
 }
 
