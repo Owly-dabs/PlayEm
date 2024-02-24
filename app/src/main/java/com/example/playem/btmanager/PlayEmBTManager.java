@@ -1,81 +1,159 @@
 package com.example.playem.btmanager;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.*;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.example.playem.MainActivity;
 import com.example.playem.PermissionHandlerDelegate;
 import com.example.playem.PermissionsHandle;
+import com.example.playem.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
-public class PlayEmBTManager {
+public class PlayEmBTManager extends BluetoothGattServerCallback{
 
-    @RequiresApi(api = Build.VERSION_CODES.S)
     public PlayEmBTManager(MainActivity context) {
         this.parentActivity = context;
+        this.permissionHandler = new BTPermissionHandler("PlayEm BT Manager", btPermissionsHandles);
         checkHardware();
-        checkBTAdapterPermissions();
+        if(!permissionHandler.CheckAllPermissions(parentActivity)) {
+            permissionHandler.RequestMissingPermissions(parentActivity);
+        }
         checkBTEnabled();
+    }
+    private final PermissionsHandle[] btPermissionsHandles = new PermissionsHandle[]{
+            new BTPermissionHandle(Manifest.permission.BLUETOOTH_CONNECT),
+            new BTPermissionHandle(Manifest.permission.BLUETOOTH_SCAN),
+            new BTPermissionHandle(Manifest.permission.BLUETOOTH_ADVERTISE),
+            new BTPermissionHandle(Manifest.permission.ACCESS_COARSE_LOCATION),
+            new BTPermissionHandle(Manifest.permission.ACCESS_FINE_LOCATION),
+    };
+    @SuppressLint("MissingPermission")
+    //TODO: Make it a service dependency
+    private void GattServerInit() {
+        if (permissionHandler.CheckAllPermissions(parentActivity)) {
+            gattServer = bluetoothManager.openGattServer(parentActivity, GattServerCbFactory.CreateGATTServerCallback(this));
+            gattServer.addService(new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY));
+        }
     }
 
     private void checkBTEnabled() {
         if (hasHW && !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             if (ActivityCompat.checkSelfPermission(parentActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                parentActivity.startActivityForResult(enableBtIntent, -1);
+                parentActivity.startActivityForResult(enableBtIntent, -1);//change api if time allows
             }else{
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    checkBTAdapterPermissions();
-                }
+                permissionHandler.RequestMissingPermissions(parentActivity);
             }
         }
     }
     private void checkHardware() {
-        this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        this.bluetoothManager = (BluetoothManager) parentActivity.getSystemService(Context.BLUETOOTH_SERVICE);
+        if(bluetoothManager==null){
+            hasHW = false;
+            return;
+        }
+        bluetoothAdapter = bluetoothManager.getAdapter();
         hasHW = bluetoothAdapter != null;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.S)
-    private void checkBTAdapterPermissions() {
-        if (hasHW) {
-            final String[] rt_permissions = {
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-            };
+    private BluetoothManager bluetoothManager;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothGattServer gattServer;
+    private final AppCompatActivity parentActivity;
+
+    @Override
+    public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
+        super.onConnectionStateChange(device, status, newState);
+    }
+
+    @Override
+    public void onServiceAdded(int status, BluetoothGattService service) {
+        super.onServiceAdded(status, service);
+    }
+
+    @Override
+    public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
+        super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
+    }
+
+    @Override
+    public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+        super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
+    }
+
+    @Override
+    public void onDescriptorReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattDescriptor descriptor) {
+        super.onDescriptorReadRequest(device, requestId, offset, descriptor);
+    }
+
+    @Override
+    public void onDescriptorWriteRequest(BluetoothDevice device, int requestId, BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+        super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value);
+    }
+
+    @Override
+    public void onExecuteWrite(BluetoothDevice device, int requestId, boolean execute) {
+        super.onExecuteWrite(device, requestId, execute);
+    }
+
+    @Override
+    public void onNotificationSent(BluetoothDevice device, int status) {
+        super.onNotificationSent(device, status);
+    }
+
+    @Override
+    public void onMtuChanged(BluetoothDevice device, int mtu) {
+        super.onMtuChanged(device, mtu);
+    }
+
+    @Override
+    public void onPhyUpdate(BluetoothDevice device, int txPhy, int rxPhy, int status) {
+        super.onPhyUpdate(device, txPhy, rxPhy, status);
+    }
+
+    @Override
+    public void onPhyRead(BluetoothDevice device, int txPhy, int rxPhy, int status) {
+        super.onPhyRead(device, txPhy, rxPhy, status);
+    }
+    private boolean hasHW = false;
+    private BTPermissionHandler permissionHandler;
+    protected  class BTPermissionHandler extends PermissionsHandler{
+        public BTPermissionHandler(String GroupName, PermissionsHandle[] Permissions_to_track) {
+            super(GroupName, Permissions_to_track);
+        }
+        @Override
+        protected void RequestMissingPermissions(AppCompatActivity context) {
             ArrayList<String> requires = new ArrayList<>();
-            for(String s:rt_permissions)
+            for(PermissionsHandle s: btPermissionsHandles)
             {
-                if(ActivityCompat.checkSelfPermission(parentActivity, s)!= PackageManager.PERMISSION_GRANTED){
-                    requires.add(s);
+                if(ActivityCompat.checkSelfPermission(parentActivity, s.getPermission())!= PackageManager.PERMISSION_GRANTED){
+                    requires.add(s.getPermission());
                     Log.w("PERM","Requiring:"+s);
-                    ((PermissionHandlerDelegate)parentActivity).RegisterRequests(new BTPermissionHandle(s));
+                    ((PermissionHandlerDelegate)parentActivity).RegisterRequests(s);
                 }
             }
             if(requires.size()>0){
                 String[] requiredPerm = new String[requires.size()];
                 requiredPerm= requires.toArray(requiredPerm);
-                ActivityCompat.requestPermissions(parentActivity, requiredPerm,2);
+                ActivityCompat.requestPermissions(parentActivity, requiredPerm,2); //Could use request code for a hashed event system from activity
             }
         }
     }
-    private BluetoothAdapter bluetoothAdapter;
-    private AppCompatActivity parentActivity;
-    private boolean hasHW = false;
     protected class BTPermissionHandle implements PermissionsHandle{
         protected BTPermissionHandle(String permission){
             Permission = permission;
         }
-        public String Permission;
+        protected String Permission;
         @Override
         public void NotGranted() {
             Log.e("PERM",Permission +" Not Granted!");
@@ -87,6 +165,13 @@ public class PlayEmBTManager {
         @Override
         public String Rationale() {
             return null;
+        }
+        @Override
+        public String toString(){
+            return new String(Arrays.copyOf(Permission.toCharArray(),Permission.length()));
+        }
+        public String getPermission(){
+            return this.toString();
         }
     }
 }
