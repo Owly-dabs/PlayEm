@@ -18,6 +18,8 @@ import com.example.playem.PermissionsHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Queue;
 
 public class PlayEmBTManager extends BluetoothGattServerCallback{
 
@@ -71,19 +73,36 @@ public class PlayEmBTManager extends BluetoothGattServerCallback{
     private BluetoothGattServer gattServer;
     private final AppCompatActivity parentActivity;
 
+    private Queue<BluetoothGattService> serviceQueue;
+    public void EnqueueServiceAdd(BluetoothGattService service){
+        serviceQueue.add(service);
+    }
+    private HashMap<String,BluetoothGattService> activeServices = new HashMap<>();
     @Override
     public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
         super.onConnectionStateChange(device, status, newState);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onServiceAdded(int status, BluetoothGattService service) {
         super.onServiceAdded(status, service);
+        if(status == BluetoothGatt.GATT_SUCCESS){
+            activeServices.put(service.getUuid().toString(),service);
+            BluetoothGattService next = serviceQueue.remove();
+            if(next != null){
+                gattServer.addService(next);
+            }
+        }else{
+            Log.e("PERM",String.format("Could not add service: %s",service.toString()));
+            gattServer.addService(service);
+        }
     }
 
     @Override
     public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
-        super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
+        //super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
+
     }
 
     @Override
