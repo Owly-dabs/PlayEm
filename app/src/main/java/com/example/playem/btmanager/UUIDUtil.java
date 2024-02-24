@@ -8,6 +8,7 @@ public class UUIDUtil {
     public static final UUID SERVICE_HID = UUID.fromString("00001812" + BTBaseNumber);
     public static final UUID CHAR_REPORT = UUID.fromString("00002A4D" + BTBaseNumber);
     public static final UUID CHAR_REPORT_MAP = UUID.fromString("00002A4B" + BTBaseNumber);
+    public static final UUID CHAR_PROTO_MODE = UUID.fromString("00002A4E" + BTBaseNumber);
     public static final UUID CHAR_HID_INFORMATION = UUID.fromString("00002A4A" + BTBaseNumber);
     public static final UUID CHAR_HID_CONTROL_POINT = UUID.fromString("00002A4C" + BTBaseNumber);
     public static final UUID DESC_REPORT_REFERENCE = UUID.fromString("00002908" + BTBaseNumber);
@@ -23,4 +24,8 @@ public class UUIDUtil {
     // BAS related UUIDs
     public static final UUID SERVICE_BAS = UUID.fromString("0000180F" + BTBaseNumber);
     public static final UUID CHAR_BATTERY_LEVEL = UUID.fromString("00002A19" + BTBaseNumber); //Implement the only mandatory field for bat
+
+    //Advertisement Types
+    public static final UUID ADVERT_APPEARANCE = UUID.fromString("00002A01"+UUIDUtil.BTBaseNumber);
+    public static final UUID ADVERT_LOCALNAME_F = UUID.fromString("00002A00"+UUIDUtil.BTBaseNumber);
 }
