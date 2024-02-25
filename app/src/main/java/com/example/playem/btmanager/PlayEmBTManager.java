@@ -3,6 +3,8 @@ package com.example.playem.btmanager;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.*;
+import android.bluetooth.le.AdvertiseData;
+import android.bluetooth.le.AdvertiseSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,9 +21,11 @@ import com.example.playem.PermissionsHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.UUID;
 
-public class PlayEmBTManager extends BluetoothGattServerCallback{
+public class PlayEmBTManager extends BluetoothGattServerCallback implements GattServerCbRouter{
 
     public PlayEmBTManager(MainActivity context) {
         this.parentActivity = context;
@@ -74,6 +78,9 @@ public class PlayEmBTManager extends BluetoothGattServerCallback{
     private final AppCompatActivity parentActivity;
 
     private Queue<BluetoothGattService> serviceQueue;
+    private Queue<AdvertiseSettings> advertSettings;
+    private Queue<AdvertiseData> advertData;
+
     public void EnqueueServiceAdd(BluetoothGattService service){
         serviceQueue.add(service);
     }
@@ -101,13 +108,26 @@ public class PlayEmBTManager extends BluetoothGattServerCallback{
 
     @Override
     public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
+        UUID charUUID = characteristic.getUuid();
         //super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
-
+        if(this.cReaders.containsKey(charUUID)){
+            Objects.requireNonNull(cReaders.get(charUUID)).onCharacteristicReadRequest(gattServer,device, requestId, characteristic,offset);
+        }
+        else{
+            Log.e("GATTSERVER","Unknown Characteristics Read Request");
+        }
     }
 
     @Override
     public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
         super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
+        UUID charUUID = characteristic.getUuid();
+        if(this.cReaders.containsKey(charUUID)){
+            Objects.requireNonNull(cWriters.get(charUUID)).onCharacteristicWriteRequest(gattServer,device, requestId, characteristic,preparedWrite,responseNeeded,offset);
+        }
+        else{
+            Log.e("GATTSERVER","Unknown Characteristics Write Request");
+        }
     }
 
     @Override
