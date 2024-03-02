@@ -17,6 +17,10 @@ import com.example.playem.MainActivity;
 import com.example.playem.PermissionHandlerDelegate;
 import com.example.playem.PermissionsHandle;
 import com.example.playem.PermissionsHandler;
+import com.example.playem.btmanager.blehandlers.*;
+import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
+import com.example.playem.btmanager.blehandlers.interfaces.BLEDescriptorReadRequest;
+import com.example.playem.btmanager.services.BLE_HIDServiceBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +28,8 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PlayEmBTManager extends BluetoothGattServerCallback implements GattServerCbRouter{
 
@@ -36,6 +42,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         }
         checkBTEnabled();
     }
+
     private final PermissionsHandle[] btPermissionsHandles = new PermissionsHandle[]{
             new BTPermissionHandle(Manifest.permission.BLUETOOTH_CONNECT),
             new BTPermissionHandle(Manifest.permission.BLUETOOTH_SCAN),
@@ -45,10 +52,18 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     };
     @SuppressLint("MissingPermission")
     //TODO: Make it a service dependency
-    private void GattServerInit() {
+    private void GattServerInit(byte[] HID_ReportMap,byte[] emptyResponse, byte[] hidRefReport) {
         if (permissionHandler.CheckAllPermissions(parentActivity)) {
             gattServer = bluetoothManager.openGattServer(parentActivity, GattServerCbFactory.CreateGATTServerCallback(this));
-            gattServer.addService(new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY));
+            BLE_HIDServiceBuilder.Build(serviceQueue,advertSettings,advertData,HID_ReportMap);
+            this.cReaders.put(UUIDUtil.CHAR_PNP_ID,(BLECharacteristicsReadRequest) new DISPnpIdCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_HID_INFORMATION,(BLECharacteristicsReadRequest) new HIDInformationCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_REPORT,(BLECharacteristicsReadRequest) new HIDReportCReadRequest(emptyResponse,hidRefReport));
+            this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP,(BLECharacteristicsReadRequest) new HIDReportMapCReadRequest(HID_ReportMap));
+            this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, (BLEDescriptorReadRequest) new HIDReportRRDReadRequest());
+            this.dReaders.put(UUIDUtil.DESC_CCC, (BLEDescriptorReadRequest) new HIDReportCCCDReadRequest());
+            //TODO Check if Report descriptors need write functions from Host
+            //TODO Check if Any Characteristics need Write functions from Host
         }
     }
 
@@ -77,17 +92,25 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     private BluetoothGattServer gattServer;
     private final AppCompatActivity parentActivity;
 
-    private Queue<BluetoothGattService> serviceQueue;
-    private Queue<AdvertiseSettings> advertSettings;
-    private Queue<AdvertiseData> advertData;
+    private final Queue<BluetoothGattService> serviceQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<AdvertiseSettings> advertSettings= new ConcurrentLinkedQueue<>();
+    private final Queue<AdvertiseData> advertData = new ConcurrentLinkedQueue<>();
+    private final HashMap<String,BluetoothGattService> activeServices = new HashMap<>();
 
-    public void EnqueueServiceAdd(BluetoothGattService service){
-        serviceQueue.add(service);
-    }
-    private HashMap<String,BluetoothGattService> activeServices = new HashMap<>();
+    private final ConcurrentHashMap<String,BluetoothDevice> ConnectedHost = new ConcurrentHashMap<>();
     @Override
     public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
         super.onConnectionStateChange(device, status, newState);
+        if(ConnectedHost.containsKey(device.getAddress())){
+            if(newState == BluetoothProfile.STATE_DISCONNECTED){
+                //TODO Ensure Services Stop Here
+                ConnectedHost.remove(device.getAddress());
+            }
+            return;
+        }
+        if(newState == BluetoothProfile.STATE_CONNECTED){
+            ConnectedHost.put(device.getAddress(),device);
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -95,7 +118,9 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     public void onServiceAdded(int status, BluetoothGattService service) {
         super.onServiceAdded(status, service);
         if(status == BluetoothGatt.GATT_SUCCESS){
-            activeServices.put(service.getUuid().toString(),service);
+            if(activeServices.put(service.getUuid().toString(),service)!=null){
+                Log.w("SERVICE",String.format("Previous Characteristics was not null! - %s",service));
+            }
             BluetoothGattService next = serviceQueue.remove();
             if(next != null){
                 gattServer.addService(next);
@@ -122,7 +147,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
         super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
         UUID charUUID = characteristic.getUuid();
-        if(this.cReaders.containsKey(charUUID)){
+        if(this.cWriters.containsKey(charUUID)){
             Objects.requireNonNull(cWriters.get(charUUID)).onCharacteristicWriteRequest(gattServer,device, requestId, characteristic,preparedWrite,responseNeeded,offset);
         }
         else{
@@ -133,8 +158,16 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     @Override
     public void onDescriptorReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattDescriptor descriptor) {
         super.onDescriptorReadRequest(device, requestId, offset, descriptor);
-    }
+        UUID desUUID = descriptor.getUuid();
 
+        if(this.cReaders.containsKey(desUUID)){
+            Objects.requireNonNull(dReaders.get(desUUID)).onDescriptorReadRequest(gattServer,device, requestId,offset,descriptor);//TODO See if runnable object can keep reference
+        }
+        else{
+            Log.e("GATTSERVER","Unknown Characteristics Read Request");
+        }
+    }
+    ////TODO Unknown if required/should be implemented Requirements
     @Override
     public void onDescriptorWriteRequest(BluetoothDevice device, int requestId, BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
         super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value);
@@ -165,7 +198,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         super.onPhyRead(device, txPhy, rxPhy, status);
     }
     private boolean hasHW = false;
-    private BTPermissionHandler permissionHandler;
+    private final BTPermissionHandler permissionHandler;
     protected  class BTPermissionHandler extends PermissionsHandler{
         public BTPermissionHandler(String GroupName, PermissionsHandle[] Permissions_to_track) {
             super(GroupName, Permissions_to_track);
