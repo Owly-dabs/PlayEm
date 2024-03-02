@@ -4,6 +4,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 
-public interface BLECharacteristicsWriter {
+public interface BLECharacteristicsWriteRequest {
     Runnable onCharacteristicWriteRequest(BluetoothGattServer gattServer, BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset);
 }
