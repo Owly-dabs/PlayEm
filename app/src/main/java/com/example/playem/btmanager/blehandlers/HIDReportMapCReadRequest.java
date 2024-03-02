@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 
+import com.example.playem.btmanager.GattResponse;
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
 public class HIDReportMapCReadRequest implements BLECharacteristicsReadRequest {
     public HIDReportMapCReadRequest (byte[] reportMap){
@@ -21,10 +22,8 @@ public class HIDReportMapCReadRequest implements BLECharacteristicsReadRequest {
                 if(offset>= ReportMap.length){
                     gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,new byte[]{0});
                 }else{
-                    int remainder = ReportMap.length-offset;
-                    byte[] _destarr = new byte[remainder];
-                    System.arraycopy(ReportMap,offset,_destarr,0,remainder);//Really slow op should mess with Mtus to speed things up
-                    gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset,_destarr);
+                    //TODO: Really slow op should mess with Mtus to speed things up
+                    gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset, GattResponse.Slice(ReportMap,offset));
                 }
 
             }

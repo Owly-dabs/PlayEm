@@ -9,19 +9,19 @@ import android.bluetooth.BluetoothGattServer;
 import com.example.playem.btmanager.GattResponse;
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
 
-public class HIDInformationCReadRequest implements BLECharacteristicsReadRequest {
-    final byte[] HIDINFO = {0x11,0x01,0x00,0x02}; //LSB b1-b2 1.11 || localization cc || Normally Connected && See pg 77 HID11
+public class DISPnpIdCReadRequest implements BLECharacteristicsReadRequest {
+    private byte[] DISVendorID = {0x02,0,0,0,0,0,0};
     @Override
     public Runnable onCharacteristicReadRequest(BluetoothGattServer gattServer, BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, int offset) {
         return new Runnable() {
-            @Override
             @SuppressLint("MissingPermission")
+            @Override
             public void run() {
-                int o = offset;
-                if(offset>3){
-                    o =0;
+                if(offset>=DISVendorID.length){
+                    gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,new byte[]{});
+                }else{
+                    gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset, GattResponse.Slice(DISVendorID,offset));
                 }
-                gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,o, GattResponse.Slice(HIDINFO,o));
             }
         };
     }
