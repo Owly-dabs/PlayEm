@@ -1,8 +1,6 @@
 package com.example.playem;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,26 +31,22 @@ public class MainActivity extends AppCompatActivity implements PermissionHandler
             else{
                 ph.NotGranted();
             }
-            DeregisterRequests(ph.Permission);
+            DeregisterRequests(ph.getPermission());
         }
     }
-
     @Override
     public void RegisterRequests(PermissionsHandle resolution) {
-        if(resolution.Permission!="PlayEm") {
-            this.pending.put(resolution.Permission, resolution);
+        if(resolution.getPermission()!="PlayEm") {
+            this.pending.put(resolution.getPermission(), resolution);
             //Put Stuff here to block UI call if needed
-            if (this.shouldShowRequestPermissionRationale(resolution.Permission)) {
+            if (this.shouldShowRequestPermissionRationale(resolution.getPermission())) {
                 Log.w("PERM", resolution.Rationale()); //This should be the hook to an activity to show message
             }
         }
     }
-
     @Override
     public void DeregisterRequests(String permissions) {
         this.pending.remove(permissions);
     }
-
-
 }
 

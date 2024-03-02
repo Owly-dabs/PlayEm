@@ -4,5 +4,6 @@ public interface PermissionsHandle {
     public void NotGranted();
     public void Granted();
     public String Rationale();
-    public String Permission = "PlayEm";
+    public String toString();
+    public String getPermission();
 }
