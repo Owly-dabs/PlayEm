@@ -1,13 +1,15 @@
 package com.example.playem.btmanager;
 
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
-import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsWriter;
+import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsWriteRequest;
+import com.example.playem.btmanager.blehandlers.interfaces.BLEDescriptorReadRequest;
 
-import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface GattServerCbRouter {
-    HashMap<UUID, BLECharacteristicsReadRequest> cReaders = new HashMap<>();
-    HashMap<UUID, BLECharacteristicsWriter> cWriters = new HashMap<>();
+    ConcurrentHashMap<UUID, BLECharacteristicsReadRequest> cReaders = new ConcurrentHashMap<>();
+    ConcurrentHashMap<UUID, BLECharacteristicsWriteRequest> cWriters = new ConcurrentHashMap<>();
+    ConcurrentHashMap<UUID, BLEDescriptorReadRequest> dReaders = new ConcurrentHashMap<>();
     //Advertisers etc if required
 }
