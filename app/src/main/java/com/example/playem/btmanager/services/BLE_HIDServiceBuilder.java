@@ -16,7 +16,7 @@ public class BLE_HIDServiceBuilder {
     @SuppressLint("MissingPermission")
     //TODO @RequiresPermission(Manifest.....)
     //AdvertisementData is set in the order of Data followed by Scan results
-    public static boolean Build(Queue<Object> toAddServices,Queue<Object> toAddAdvertisementSetting,Queue<Object> toAddAdvertisementData, byte[] ReportMap){
+    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData, byte[] ReportMap){
         try{
             BluetoothGattService HID_Service = new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService BAT_Service = new BluetoothGattService(UUIDUtil.SERVICE_BAS,BluetoothGattService.SERVICE_TYPE_PRIMARY);
@@ -31,7 +31,7 @@ public class BLE_HIDServiceBuilder {
                     BluetoothGattCharacteristic.PERMISSION_READ
             );
 
-            final byte[] VendorID = {0x02,0,0,0,0,0,0};
+            final byte[] VendorID = {0x02,0,0,0,0,0,0}; //should pull this into other static final fields
             DIS_PnPID.setValue(VendorID);
             DIS_Service.addCharacteristic(DIS_PnPID);
 
@@ -87,7 +87,7 @@ public class BLE_HIDServiceBuilder {
                         UUIDUtil.DESC_REPORT_REFERENCE,
                         BluetoothGattDescriptor.PERMISSION_READ|BluetoothGattDescriptor.PERMISSION_WRITE
                 );
-                C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID 2 Consumer CTRL,1 for KB Type:Input
+                C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID (2) Consumer CTRL|(1) for KB Type, Output(0)|Input(1)|Feature(2)
                 //Report Characteristics ClientCCDesc
                 BluetoothGattDescriptor C_Report_CCCD = new BluetoothGattDescriptor(
                         UUIDUtil.DESC_CCC,
