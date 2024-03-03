@@ -8,15 +8,17 @@ import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.os.ParcelUuid;
 import android.util.Log;
+
 import com.example.playem.btmanager.UUIDUtil;
 
 import java.util.Queue;
 
 public class BLE_HIDServiceBuilder {
+    //TODO: Local AD Service
+    //TODO: Appearance Service
     @SuppressLint("MissingPermission")
-    //TODO @RequiresPermission(Manifest.....)
     //AdvertisementData is set in the order of Data followed by Scan results
-    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData, byte[] ReportMap){
+    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData){
         try{
             BluetoothGattService HID_Service = new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService BAT_Service = new BluetoothGattService(UUIDUtil.SERVICE_BAS,BluetoothGattService.SERVICE_TYPE_PRIMARY);
@@ -25,6 +27,12 @@ public class BLE_HIDServiceBuilder {
             ////////////////
             ///DIS Section//
             ////////////////
+            BluetoothGattCharacteristic DIS_PnpID = new BluetoothGattCharacteristic(
+                    UUIDUtil.CHAR_PNP_ID,
+                    BluetoothGattCharacteristic.PROPERTY_READ,
+                    BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED
+            );
+            DIS_Service.addCharacteristic(DIS_PnpID);
             BluetoothGattCharacteristic DIS_ModelNo = new BluetoothGattCharacteristic(
                     UUIDUtil.CHAR_MODEL_NO,
                     BluetoothGattCharacteristic.PROPERTY_READ,
@@ -87,7 +95,7 @@ public class BLE_HIDServiceBuilder {
                         UUIDUtil.DESC_REPORT_REFERENCE,
                         BluetoothGattDescriptor.PERMISSION_READ_ENCRYPTED|BluetoothGattDescriptor.PERMISSION_WRITE_ENCRYPTED
                 );
-                C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID (2) Consumer CTRL|(1) for KB Type, Output(0)|Input(1)|Feature(2)
+                //C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID (2) Consumer CTRL|(1) for KB Type, Output(0)|Input(1)|Feature(2)
                 //Report Characteristics ClientCCDesc
                 BluetoothGattDescriptor C_Report_CCCD = new BluetoothGattDescriptor(
                         UUIDUtil.DESC_CCC,
@@ -105,6 +113,7 @@ public class BLE_HIDServiceBuilder {
                     BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED|BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
             );
             ProtocolMode.setValue(new byte[]{0x01});
+            ProtocolMode.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
             //Protocol mode optional in report mode;
             HID_Service.addCharacteristic(ProtocolMode);
 

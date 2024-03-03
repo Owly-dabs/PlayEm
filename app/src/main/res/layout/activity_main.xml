@@ -33,9 +33,24 @@
         app:layout_constraintVertical_bias="0.06" />
 
     <SeekBar
-        android:id="@+id/seekBar0"
+        android:id="@+id/seekBar1"
         android:layout_width="289dp"
         android:layout_height="14dp"
-        tools:layout_editor_absoluteX="61dp"
-        tools:layout_editor_absoluteY="154dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tHostName"
+        app:layout_constraintVertical_bias="0.056" />
+
+    <Button
+        android:id="@+id/bTest"
+        android:layout_width="117dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="36dp"
+        android:text="Test All"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.136"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar1" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

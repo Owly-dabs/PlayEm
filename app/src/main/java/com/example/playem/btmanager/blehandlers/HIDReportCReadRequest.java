@@ -24,9 +24,9 @@ public class HIDReportCReadRequest implements BLECharacteristicsReadRequest {
             public void run(){
                 synchronized (HidReportRef){
                     if(offset>=HidReportRef.getTsize()){
-                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,HidReportRef.GetReport());
+                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,EmptyResponse);
                     }else{
-                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset,EmptyResponse);
+                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset, HidReportRef.GetReport() );//GattResponse.Slice(HidReportRef.GetReport(),offset));
                     }
                 }
             }

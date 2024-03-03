@@ -2,7 +2,16 @@ package com.example.playem.btmanager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.*;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattServer;
+import android.bluetooth.BluetoothGattServerCallback;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
@@ -14,6 +23,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -21,9 +31,18 @@ import com.example.playem.MainActivity;
 import com.example.playem.PermissionHandlerDelegate;
 import com.example.playem.PermissionsHandle;
 import com.example.playem.PermissionsHandler;
-import com.example.playem.btmanager.blehandlers.*;
-import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
-import com.example.playem.btmanager.blehandlers.interfaces.BLEDescriptorReadRequest;
+import com.example.playem.btmanager.blehandlers.BASReadRequest;
+import com.example.playem.btmanager.blehandlers.DISManuIDCReadRequest;
+import com.example.playem.btmanager.blehandlers.DISModelNoReadRequest;
+import com.example.playem.btmanager.blehandlers.DISPnpIDReadRequest;
+import com.example.playem.btmanager.blehandlers.DISSoftIDCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDInformationCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDProtoModeReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportCCCDReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportMapCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportNotifier;
+import com.example.playem.btmanager.blehandlers.HIDReportRRDReadRequest;
 import com.example.playem.btmanager.services.BLE_HIDServiceBuilder;
 import com.example.playem.pipes.PlayEmDataPipe;
 
@@ -32,6 +51,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -103,25 +124,32 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
             new BTPermissionHandle(Manifest.permission.ACCESS_COARSE_LOCATION),
             new BTPermissionHandle(Manifest.permission.ACCESS_FINE_LOCATION),
     };
+
+    private PlayEmDataPipe dataPipe;
     @SuppressLint("MissingPermission")
     //TODO: Make it a service dependency
     public void GattServerInit(byte[] HID_ReportMap, byte[] emptyResponse, PlayEmDataPipe dataPipe) {
+        if(dataPipe==null){
+            Log.e("PIPE","DataPipe is Null!");
+        }
+        this.dataPipe = dataPipe;
         if (permissionHandler.CheckAllPermissions(parentActivity)) {
             Log.i("GATTSERVER","Gatt Server is initializing");
             gattServer = bluetoothManager.openGattServer(parentActivity, this);
-            BLE_HIDServiceBuilder.Build(serviceQueue,advertSettings,advertData,HID_ReportMap);
+            BLE_HIDServiceBuilder.Build(serviceQueue,advertSettings,advertData);
             //Start Adding Services
             this.onServiceAdded(-1,serviceQueue.poll());
-            this.cReaders.put(UUIDUtil.CHAR_MODEL_NO,(BLECharacteristicsReadRequest) new DISModelNoReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_MANU_STR,(BLECharacteristicsReadRequest) new DISManuIDCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_SOFT_STR,(BLECharacteristicsReadRequest) new DISSoftIDCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_HID_INFORMATION,(BLECharacteristicsReadRequest) new HIDInformationCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_REPORT,(BLECharacteristicsReadRequest) new HIDReportCReadRequest(emptyResponse,dataPipe));
-            this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP,(BLECharacteristicsReadRequest) new HIDReportMapCReadRequest(HID_ReportMap));
-            this.cReaders.put(UUIDUtil.CHAR_PROTO_MODE,(BLECharacteristicsReadRequest) new HIDProtoModeReadRequest());
-            this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, (BLEDescriptorReadRequest) new HIDReportRRDReadRequest());
-            this.dReaders.put(UUIDUtil.DESC_CCC, (BLEDescriptorReadRequest) new HIDReportCCCDReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL,(BLECharacteristicsReadRequest) new BASReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_PNP_ID,new DISPnpIDReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_MODEL_NO, new DISModelNoReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_MANU_STR, new DISManuIDCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_SOFT_STR, new DISSoftIDCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_HID_INFORMATION, new HIDInformationCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_REPORT, new HIDReportCReadRequest(emptyResponse,dataPipe));
+            this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP, new HIDReportMapCReadRequest(HID_ReportMap));
+            this.cReaders.put(UUIDUtil.CHAR_PROTO_MODE, new HIDProtoModeReadRequest());
+            this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, new HIDReportRRDReadRequest((byte) 0x01, (byte) 0x01,(byte)12));
+            this.dReaders.put(UUIDUtil.DESC_CCC, new HIDReportCCCDReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL, new BASReadRequest());
             //TODO Check if Report descriptors need write functions from Host
             //TODO Check if Any Characteristics need Write functions from Host
         }
@@ -146,6 +174,18 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         hasHW = bluetoothAdapter != null;
     }
 
+    private void attachNotifier(BluetoothDevice device){
+        if(NotificationTimer==null){
+            NotificationTimer = new Timer("BLE Notifier");
+        }
+        NotificationTimer.purge();
+        TimerTask t = new HIDReportNotifier().onTimedNotifyCharacteristics(
+                        gattServer,device,
+                        Objects.requireNonNull(activeServices.get(UUIDUtil.SERVICE_HID.toString())).getCharacteristic(UUIDUtil.CHAR_REPORT),
+                        dataPipe);
+        NotificationTimer.scheduleAtFixedRate(t,500,10);//Wait half a second before firing first then 15ms after
+    }
+    private Timer NotificationTimer;
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothGattServer gattServer;
@@ -162,44 +202,40 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
         //super.onConnectionStateChange(device, status, newState);
         Log.w("CONNECT",String.format("New Device Connection State %d - %s",status, device.getAddress()));
-        if(ConnectedHost.containsKey(device.getAddress())){
-            if(newState == BluetoothProfile.STATE_DISCONNECTED){
-                //TODO Ensure Services Stop Here
-                ConnectedHost.remove(device.getAddress());
-                //auto reconnect should be handling unintended disconnects
-                Log.w("CONNECT",String.format("New Device Connection State DISCONNECTED %d - %s",status, device.getAddress()));
-            }
-            return;
-        }
-        if(newState == BluetoothProfile.STATE_CONNECTED){
+
+        if(newState == BluetoothProfile.STATE_DISCONNECTED){
+            //TODO Ensure Services Stop Here
+            ConnectedHost.remove(device.getAddress());
             BroadcastReceiver checkBondState = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,BluetoothDevice.ERROR);
                     if(state == BluetoothDevice.BOND_BONDED){
                         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                        if(device!=null){
-                            Log.i("BOND","Bond State is good");
-                            ConnectedHost.put(device.getAddress(),device);
-                            StopHIDAdvertisement();
-                        }else{
-                            Log.e("BOND","Failed Bond on intent callback");
-                            //Handle something here
-                        }
-                        context.unregisterReceiver(this);
                         synchronized (gattServer){
                             gattServer.connect(device,true);
                         }
+                        context.unregisterReceiver(this);
                     }
                 }
             };
             parentActivity.registerReceiver(checkBondState, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
-            if(device.getBondState()==BluetoothDevice.BOND_NONE){
-                Log.w("CONNECT","New Device Connection State CONNECTED but BONDSTATE is NONE");
-                device.createBond();
-            }
+            //auto reconnect should be handling unintended disconnects
+            Log.w("DISCONNECT",String.format("New Device Connection State DISCONNECTED %d - %s",status, device.getAddress()));
+            return;
+        }
+
+        if(newState == BluetoothProfile.STATE_CONNECTED){
+            Log.i("SERVICE","Attaching Notifier");
+            ConnectedHost.put(device.getAddress(),device);
+            StopHIDAdvertisement();
+            attachNotifier(ConnectedHost.get(device.getAddress()));
             Log.i("CONNECT",String.format("New Device Connection State CONNECTED %d - %s",status, device.getAddress()));
         }
+        /*if(device.getBondState()==BluetoothDevice.BOND_NONE){
+            Log.w("CONNECT","New Device Connection State CONNECTED but BONDSTATE is NONE");
+            device.createBond();
+        }*/
     }
 
     @SuppressLint("MissingPermission")
@@ -210,7 +246,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
             if(activeServices.put(service.getUuid().toString(),service)!=null){
                 Log.w("GATTSERVICE",String.format("Previous Characteristics was not null! - %s",service));
             }
-            Log.i("GATTSERVICE",String.format("Service was successfully added %s",service.toString()));
+            Log.i("GATTSERVICE",String.format("Service was successfully added %s", service));
             BluetoothGattService next = serviceQueue.poll();
             if(next != null){
                 gattServer.addService(next);
@@ -277,7 +313,11 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
 
     @Override
     public void onNotificationSent(BluetoothDevice device, int status) {
+        //Log.i("BTMANAGER",String.format("Notification sent %s %d",device.getAddress(),status)); //Remove when reverting to fast poll
         super.onNotificationSent(device, status);
+        synchronized (dataPipe){
+            dataPipe.NotifyComplete();
+        }
     }
 
     @Override
@@ -311,14 +351,14 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
                     ((PermissionHandlerDelegate)parentActivity).RegisterRequests(s);
                 }
             }
-            if(requires.size()>0){
+            if(!requires.isEmpty()){
                 String[] requiredPerm = new String[requires.size()];
                 requiredPerm= requires.toArray(requiredPerm);
                 ActivityCompat.requestPermissions(parentActivity, requiredPerm,2); //Could use request code for a hashed event system from activity
             }
         }
     }
-    protected class BTPermissionHandle implements PermissionsHandle{
+    protected static class BTPermissionHandle implements PermissionsHandle{
         protected BTPermissionHandle(String permission){
             Permission = permission;
         }
@@ -335,6 +375,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         public String Rationale() {
             return null;
         }
+        @NonNull
         @Override
         public String toString(){
             return new String(Arrays.copyOf(Permission.toCharArray(),Permission.length()));
