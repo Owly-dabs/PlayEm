@@ -13,6 +13,8 @@ public class HIDDescriptor {
         public static final byte USAGE_MAX = 0x29;
         public static final byte LOGIC_MIN = 0x15; //length of 1 byte
         public static final byte LOGIC_MAX = 0x25; //length of 1 byte
+        public static final byte PHY_MIN = 0x35; //length of 1 byte
+        public static final byte PHY_MAX = 0x45; //length of 1 byte
         public static final byte REPORT_COUNT = (byte)0x95;
         public static final byte REPORT_SIZE = 0x75;
         public static final byte INPUT = (byte)0x81;

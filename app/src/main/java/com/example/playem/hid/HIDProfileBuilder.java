@@ -1,27 +1,38 @@
 package com.example.playem.hid;
 
+import android.util.Log;
+
+import com.example.playem.hid.interfaces.ChunkType;
+import com.example.playem.hid.interfaces.HIDChunk;
 import com.example.playem.hid.usagepages.USAGE_BUTTON;
 import com.example.playem.hid.usagepages.USAGE_DESKTOP_GENERIC;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Stack;
-
+//TODO Implement Report ID for multi virtual devices
 public class HIDProfileBuilder {
 //Stacks
     public HIDProfileBuilder(){
-        Top = new PriorityQueue<Byte>();
-        Bottom = new Stack<Byte>();
+        Top = new ArrayList<>();
+        Bottom = new Stack<>();
     }
-    private Queue<Byte> Top;
+    private List<Byte> Top;
     private Stack<Byte> Bottom;
     private byte[] ReportMap;
 
     private int axes_count = 0;
-    public void Init(){
+    public void Build(){
         AddDesktopGenericUsagePage();
         CollectionStart(HIDDescriptor.COLLECTIONTYPES.APPLICATION);
-        CollectionStart(HIDDescriptor.COLLECTIONTYPES.PHYSICAL);
+        CollectionStart(HIDDescriptor.COLLECTIONTYPES.LOGICAL);
+        Top.add((byte)0x85);
+        Top.add((byte)0x01);
+
         AddButtons(8, (byte) 0x02);
         AddAxes(5,(byte)2);
         CollectionEnd();
@@ -43,34 +54,55 @@ public class HIDProfileBuilder {
         if(nAxes>9){
             throw new RuntimeException("Too Many Axes");
         }
+
         Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE_PAGE);
         Top.add(USAGE_DESKTOP_GENERIC.PAGE);
-        Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE);
-
+        //Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE);
+        //Top.add(USAGE_DESKTOP_GENERIC.POINTER);
+        //CollectionStart(HIDDescriptor.COLLECTIONTYPES.PHYSICAL);
         for(int i = 0;i<nAxes;i++) {
+            Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE);
             Top.add((byte) (USAGE_DESKTOP_GENERIC.X + (byte) axes_count));
             axes_count++;
         }
-        Top.add((byte) (HIDDescriptor.DESCRIPTORIDS.LOGIC_MIN + 1));
+        Top.add((byte) (HIDDescriptor.DESCRIPTORIDS.LOGIC_MIN));
         Top.add((byte) 0x00);
-        Top.add((byte) 0x80); //Default 16bits LittleEndian
+        //Default 16bits LittleEndian
 
-        Top.add((byte) (HIDDescriptor.DESCRIPTORIDS.LOGIC_MAX + 1));
+        Top.add((byte) (HIDDescriptor.DESCRIPTORIDS.LOGIC_MAX + 2));
         Top.add((byte) 0xFF);
-        Top.add((byte) 0x7F); //Default 16bits LittleEndian
+        Top.add((byte) 0xFF); //Default 16bits LittleEndian
+        Top.add((byte) 0x00); //Default 16bits LittleEndian
+        Top.add((byte) 0x00);
 
         Top.add((byte) HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
-        Top.add((byte) 0x02);
+        Top.add((byte) (0x02*8));
         Top.add((byte) HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
-        Top.add((byte) 0x01);
+        Top.add((byte) nAxes);
 
         Top.add((byte) HIDDescriptor.DESCRIPTORIDS.INPUT);
         Top.add((byte) inputParams);
+        //CollectionEnd();
+        HIDChunk bChunk = new HIDChunk();
+        bChunk.Type = ChunkType.AXES;
+        bChunk.reportID = 0;
+        int buttonChunkKey = HIDChunk.CalHash(ChunkType.BUTTONS,bChunk.reportID);
+        if(Chunks.containsKey(buttonChunkKey)){
+            bChunk.bIndex = Objects.requireNonNull(Chunks.get(buttonChunkKey)).size;
+        }
+        else{
+            bChunk.bIndex = 0;
+        }
+        bChunk.size = nAxes*2; //Axes are always byte aligned
+        Chunks.put(bChunk.GetHash(),bChunk);
 
     }
 
     public void AddButtons(int nButtons,byte inputParams){
-        Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE);
+        if(nButtons>32){
+            throw new RuntimeException("Too Many Buttons");
+        }
+        Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE_PAGE);
         Top.add(USAGE_BUTTON.PAGE);
         Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE_MIN);
         Top.add((byte)0x01);
@@ -80,6 +112,10 @@ public class HIDProfileBuilder {
         Top.add((byte)0x00);
         Top.add(HIDDescriptor.DESCRIPTORIDS.LOGIC_MAX);
         Top.add((byte)0x01);
+        /*Top.add(HIDDescriptor.DESCRIPTORIDS.PHY_MIN);
+        Top.add((byte)0x00);
+        Top.add(HIDDescriptor.DESCRIPTORIDS.PHY_MAX);
+        Top.add((byte)0x01);*/
         Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
         Top.add((byte)nButtons);
         Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
@@ -88,18 +124,30 @@ public class HIDProfileBuilder {
         Top.add((byte)inputParams); //Default is 2
         if(nButtons%8!=0){ //Padding Bits
             Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
-            Top.add((byte)nButtons);
-            Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
             Top.add((byte)0x01);
+            Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
+            Top.add((byte)(nButtons%8));
             Top.add(HIDDescriptor.DESCRIPTORIDS.INPUT);
             Top.add((byte)(1|2)); //Const Var Abs
         }
+        HIDChunk bChunk= new HIDChunk();
+        bChunk.Type = ChunkType.BUTTONS;
+        bChunk.reportID = 0;
+        bChunk.bIndex = 0;
+        bChunk.size = nButtons%8==0?nButtons/8:nButtons/8+1;
+        int axesChunkKey = HIDChunk.CalHash(ChunkType.AXES,bChunk.reportID);
+        if(Chunks.containsKey(0)){
+            HIDChunk axesChunk =Objects.requireNonNull(Chunks.get(axesChunkKey));
+            axesChunk.bIndex = bChunk.size;
+            Chunks.put(axesChunkKey,axesChunk);
+        }
+        Chunks.put(bChunk.GetHash(),bChunk);
     }
     private void AddDesktopGenericUsagePage(){
         Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE_PAGE);
-        Top.add(HIDDescriptor.USAGEPAGE.DESKTOP_GENERIC.PAGE);
-        Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE_PAGE);
-        Top.add(HIDDescriptor.USAGEPAGE.DESKTOP_GENERIC.GAMEPAD);
+        Top.add(USAGE_DESKTOP_GENERIC.PAGE);
+        Top.add(HIDDescriptor.DESCRIPTORIDS.USAGE);
+        Top.add(USAGE_DESKTOP_GENERIC.JOYSTICK);
     }
     public void CollectionStart(byte COLLECTION_TYPE){
         Top.add(HIDDescriptor.DESCRIPTORIDS.COLLECTION_START);
@@ -110,13 +158,20 @@ public class HIDProfileBuilder {
         Top.add(Bottom.pop());
     }
     public byte[] GetReportMap(){
-        if(Bottom.size()>0){
+        if(!Bottom.isEmpty()){
             throw new RuntimeException("HID Report Map was improperly closed!");
         }
         ReportMap = new byte[Top.size()];
         for(int i = 0;i<Top.size();i++){
-            ReportMap[i] = Top.remove();
+            ReportMap[i] = Top.get(i);
         }
+        //DEBUG only
+        Log.w("REPORTMAP",HIDUtils.bytesToHex(ReportMap));
         return ReportMap;
     }
+
+    public HashMap<Integer, HIDChunk> GetChunks(){
+        return Chunks;
+    }
+    private final HashMap<Integer,HIDChunk> Chunks = new HashMap<>();
 }
