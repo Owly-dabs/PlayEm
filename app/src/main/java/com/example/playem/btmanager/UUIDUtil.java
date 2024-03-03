@@ -17,6 +17,7 @@ public class UUIDUtil {
     // DIS related UUIDs
     public static final UUID SERVICE_DIS = UUID.fromString("0000180A" + BTBaseNumber);
     public static final UUID CHAR_PNP_ID = UUID.fromString("00002A50" + BTBaseNumber);
+    public static final UUID CHAR_MODEL_NO = UUID.fromString("00002A24" + BTBaseNumber);
     public static final UUID CHAR_HARD_STR = UUID.fromString("00002A27"+ BTBaseNumber);
     public static final UUID CHAR_SOFT_STR = UUID.fromString("00002A28"+ BTBaseNumber);
     public static final UUID CHAR_MANU_STR = UUID.fromString("00002A29"+ BTBaseNumber);
