@@ -29,20 +29,36 @@ public class MainActivity extends AppCompatActivity implements PermissionHandler
         bleAdvertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                bleAdvertButton.setEnabled(false);
                 mBTManager.AdvertiseHID();
+            }
+        });
+        Button testButton = findViewById(R.id.bTest);
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataPipe.UpdateButtonNumber(b,testB);
+                b+=1;
+                if(b==8) {
+                    b = 0;
+                    testB = testB == 0x01 ? (byte)0x00 : 0x01;
+                }
             }
         });
         this.BLEManagerExecutorPool = Executors.newSingleThreadExecutor(); //Executors.newFixedThreadPool(2);
         mBTManager = new PlayEmBTManager(this,this.BLEManagerExecutorPool,this.getMainExecutor());
+
         BuildAndPipeAll();
     }
-
+    private int b = 0;
+    private byte testB = 0x01;
+    public PlayEmDataPipe dataPipe;
     public void BuildAndPipeAll(/*TODO Input GUI objects to bind to*/){
 
         HIDProfileBuilder builder = new HIDProfileBuilder();
         builder.Build();
         //Needs chunking now
-        PlayEmDataPipe dataPipe = new PlayEmDataPipe(builder.GetChunks());
+        dataPipe = new PlayEmDataPipe(builder.GetChunks());
         mBTManager.GattServerInit(builder.GetReportMap(),new byte[]{},dataPipe);
     }
 
