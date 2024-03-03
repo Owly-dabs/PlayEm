@@ -7,16 +7,35 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/bAdvertise"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="75dp"
-        android:layout_marginTop="125dp"
-        android:layout_marginEnd="242dp"
-        android:layout_marginBottom="558dp"
-        android:text="Button"
+        android:text="Advertise"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.136"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.062"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tHostName"
+        android:layout_width="182dp"
+        android:layout_height="55dp"
+        android:text="No Connected Device"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.854"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.06" />
+
+    <SeekBar
+        android:id="@+id/seekBar0"
+        android:layout_width="289dp"
+        android:layout_height="14dp"
+        tools:layout_editor_absoluteX="61dp"
+        tools:layout_editor_absoluteY="154dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
