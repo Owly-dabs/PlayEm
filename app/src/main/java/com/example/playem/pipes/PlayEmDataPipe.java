@@ -20,12 +20,12 @@ public class PlayEmDataPipe {
         HIDChunk aChunk;
         if(chunks.containsKey(HIDChunk.CalHash(ChunkType.BUTTONS,0))){
             bChunk = chunks.get(HIDChunk.CalHash(ChunkType.BUTTONS,0));
-            tsize += bChunk.size;
+            tsize += bChunk != null ? bChunk.size : 0;
             ButtonsData.add(bChunk); //Initialized to 0x00
         }
         if(chunks.containsKey(HIDChunk.CalHash(ChunkType.AXES,0))){
             aChunk = chunks.get(HIDChunk.CalHash(ChunkType.AXES,0));
-            tsize += aChunk.size;
+            tsize += aChunk != null ? aChunk.size : 0;
             ButtonsData.add(aChunk); //Initialized to 0x00
         }
         CurrentTruth.add((new byte[tsize]));

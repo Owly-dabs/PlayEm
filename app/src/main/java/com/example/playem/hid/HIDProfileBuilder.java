@@ -1,7 +1,5 @@
 package com.example.playem.hid;
 
-import android.util.Log;
-
 import com.example.playem.hid.interfaces.ChunkType;
 import com.example.playem.hid.interfaces.HIDChunk;
 import com.example.playem.hid.usagepages.USAGE_BUTTON;
@@ -62,7 +60,7 @@ public class HIDProfileBuilder {
             Top.add((byte) (USAGE_DESKTOP_GENERIC.X + (byte) axes_count));
             axes_count++;
         }
-        Top.add((byte) (HIDDescriptor.DESCRIPTORIDS.LOGIC_MIN));
+        Top.add(HIDDescriptor.DESCRIPTORIDS.LOGIC_MIN);
         Top.add((byte) 0x00);
         //Default 16bits LittleEndian
 
@@ -72,13 +70,13 @@ public class HIDProfileBuilder {
         Top.add((byte) 0x00); //Default 16bits LittleEndian
         Top.add((byte) 0x00);
 
-        Top.add((byte) HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
+        Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
         Top.add((byte) (0x02*8));
-        Top.add((byte) HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
+        Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
         Top.add((byte) nAxes);
 
-        Top.add((byte) HIDDescriptor.DESCRIPTORIDS.INPUT);
-        Top.add((byte) inputParams);
+        Top.add(HIDDescriptor.DESCRIPTORIDS.INPUT);
+        Top.add(inputParams);
         //CollectionEnd();
         HIDChunk bChunk = new HIDChunk();
         bChunk.Type = ChunkType.AXES;

@@ -2,7 +2,16 @@ package com.example.playem.btmanager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.*;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattServer;
+import android.bluetooth.BluetoothGattServerCallback;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
@@ -22,9 +31,18 @@ import com.example.playem.MainActivity;
 import com.example.playem.PermissionHandlerDelegate;
 import com.example.playem.PermissionsHandle;
 import com.example.playem.PermissionsHandler;
-import com.example.playem.btmanager.blehandlers.*;
-import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
-import com.example.playem.btmanager.blehandlers.interfaces.BLEDescriptorReadRequest;
+import com.example.playem.btmanager.blehandlers.BASReadRequest;
+import com.example.playem.btmanager.blehandlers.DISManuIDCReadRequest;
+import com.example.playem.btmanager.blehandlers.DISModelNoReadRequest;
+import com.example.playem.btmanager.blehandlers.DISPnpIDReadRequest;
+import com.example.playem.btmanager.blehandlers.DISSoftIDCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDInformationCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDProtoModeReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportCCCDReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportMapCReadRequest;
+import com.example.playem.btmanager.blehandlers.HIDReportNotifier;
+import com.example.playem.btmanager.blehandlers.HIDReportRRDReadRequest;
 import com.example.playem.btmanager.services.BLE_HIDServiceBuilder;
 import com.example.playem.pipes.PlayEmDataPipe;
 
@@ -228,7 +246,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
             if(activeServices.put(service.getUuid().toString(),service)!=null){
                 Log.w("GATTSERVICE",String.format("Previous Characteristics was not null! - %s",service));
             }
-            Log.i("GATTSERVICE",String.format("Service was successfully added %s",service.toString()));
+            Log.i("GATTSERVICE",String.format("Service was successfully added %s", service));
             BluetoothGattService next = serviceQueue.poll();
             if(next != null){
                 gattServer.addService(next);
