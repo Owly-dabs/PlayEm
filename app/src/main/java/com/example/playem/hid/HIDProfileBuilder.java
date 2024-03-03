@@ -30,8 +30,8 @@ public class HIDProfileBuilder {
         AddDesktopGenericUsagePage();
         CollectionStart(HIDDescriptor.COLLECTIONTYPES.APPLICATION);
         CollectionStart(HIDDescriptor.COLLECTIONTYPES.LOGICAL);
-        Top.add((byte)0x85);
-        Top.add((byte)0x01);
+        //Top.add((byte)0x85);
+        //Top.add((byte)0x01);
 
         AddButtons(8, (byte) 0x02);
         AddAxes(5,(byte)2);
