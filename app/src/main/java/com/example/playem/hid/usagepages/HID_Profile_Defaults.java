@@ -1,7 +1,7 @@
 package com.example.playem.hid.usagepages;
 
 public class HID_Profile_Defaults {
-    public final byte[] Profile = {
+    public final static byte[] Profile = {
             0x05, 0x01,                 // Usage Page (Generic Desktop Ctrls)
             0x09, 0x04,                 // Usage (Joystick)
             (byte) 0xA1, 0x01,          // Collection (Application)
