@@ -1,6 +1,7 @@
 package com.example.playem.btmanager.services;
 
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
@@ -25,6 +26,12 @@ public class BLE_HIDServiceBuilder {
             ////////////////
             ///DIS Section//
             ////////////////
+            BluetoothGattCharacteristic DIS_PnpID = new BluetoothGattCharacteristic(
+                    UUIDUtil.CHAR_PNP_ID,
+                    BluetoothGattCharacteristic.PROPERTY_READ,
+                    BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED
+            );
+            DIS_Service.addCharacteristic(DIS_PnpID);
             BluetoothGattCharacteristic DIS_ModelNo = new BluetoothGattCharacteristic(
                     UUIDUtil.CHAR_MODEL_NO,
                     BluetoothGattCharacteristic.PROPERTY_READ,
@@ -87,7 +94,7 @@ public class BLE_HIDServiceBuilder {
                         UUIDUtil.DESC_REPORT_REFERENCE,
                         BluetoothGattDescriptor.PERMISSION_READ_ENCRYPTED|BluetoothGattDescriptor.PERMISSION_WRITE_ENCRYPTED
                 );
-                C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID (2) Consumer CTRL|(1) for KB Type, Output(0)|Input(1)|Feature(2)
+                //C_Report_RRD.setValue(new byte[]{(byte) 0x02,0x01}); //ID (2) Consumer CTRL|(1) for KB Type, Output(0)|Input(1)|Feature(2)
                 //Report Characteristics ClientCCDesc
                 BluetoothGattDescriptor C_Report_CCCD = new BluetoothGattDescriptor(
                         UUIDUtil.DESC_CCC,
@@ -105,6 +112,7 @@ public class BLE_HIDServiceBuilder {
                     BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED|BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
             );
             ProtocolMode.setValue(new byte[]{0x01});
+            ProtocolMode.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
             //Protocol mode optional in report mode;
             HID_Service.addCharacteristic(ProtocolMode);
 
