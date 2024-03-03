@@ -14,8 +14,9 @@ import com.example.playem.btmanager.UUIDUtil;
 import java.util.Queue;
 
 public class BLE_HIDServiceBuilder {
+    //TODO: Local AD Service
+    //TODO: Appearance Service
     @SuppressLint("MissingPermission")
-    //TODO @RequiresPermission(Manifest.....)
     //AdvertisementData is set in the order of Data followed by Scan results
     public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData){
         try{
