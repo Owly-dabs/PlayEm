@@ -1,7 +1,6 @@
 package com.example.playem.btmanager.services;
 
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
@@ -9,6 +8,7 @@ import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.os.ParcelUuid;
 import android.util.Log;
+
 import com.example.playem.btmanager.UUIDUtil;
 
 import java.util.Queue;
@@ -17,7 +17,7 @@ public class BLE_HIDServiceBuilder {
     @SuppressLint("MissingPermission")
     //TODO @RequiresPermission(Manifest.....)
     //AdvertisementData is set in the order of Data followed by Scan results
-    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData, byte[] ReportMap){
+    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData){
         try{
             BluetoothGattService HID_Service = new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService BAT_Service = new BluetoothGattService(UUIDUtil.SERVICE_BAS,BluetoothGattService.SERVICE_TYPE_PRIMARY);

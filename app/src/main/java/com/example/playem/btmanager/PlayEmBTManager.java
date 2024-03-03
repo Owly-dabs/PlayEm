@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -117,20 +118,20 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         if (permissionHandler.CheckAllPermissions(parentActivity)) {
             Log.i("GATTSERVER","Gatt Server is initializing");
             gattServer = bluetoothManager.openGattServer(parentActivity, this);
-            BLE_HIDServiceBuilder.Build(serviceQueue,advertSettings,advertData,HID_ReportMap);
+            BLE_HIDServiceBuilder.Build(serviceQueue,advertSettings,advertData);
             //Start Adding Services
             this.onServiceAdded(-1,serviceQueue.poll());
             this.cReaders.put(UUIDUtil.CHAR_PNP_ID,new DISPnpIDReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_MODEL_NO,(BLECharacteristicsReadRequest) new DISModelNoReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_MANU_STR,(BLECharacteristicsReadRequest) new DISManuIDCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_SOFT_STR,(BLECharacteristicsReadRequest) new DISSoftIDCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_HID_INFORMATION,(BLECharacteristicsReadRequest) new HIDInformationCReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_REPORT,(BLECharacteristicsReadRequest) new HIDReportCReadRequest(emptyResponse,dataPipe));
-            this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP,(BLECharacteristicsReadRequest) new HIDReportMapCReadRequest(HID_ReportMap));
-            this.cReaders.put(UUIDUtil.CHAR_PROTO_MODE,(BLECharacteristicsReadRequest) new HIDProtoModeReadRequest());
-            this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, (BLEDescriptorReadRequest) new HIDReportRRDReadRequest((byte) 0x01, (byte) 0x01,(byte)12));
-            this.dReaders.put(UUIDUtil.DESC_CCC, (BLEDescriptorReadRequest) new HIDReportCCCDReadRequest());
-            this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL,(BLECharacteristicsReadRequest) new BASReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_MODEL_NO, new DISModelNoReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_MANU_STR, new DISManuIDCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_SOFT_STR, new DISSoftIDCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_HID_INFORMATION, new HIDInformationCReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_REPORT, new HIDReportCReadRequest(emptyResponse,dataPipe));
+            this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP, new HIDReportMapCReadRequest(HID_ReportMap));
+            this.cReaders.put(UUIDUtil.CHAR_PROTO_MODE, new HIDProtoModeReadRequest());
+            this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, new HIDReportRRDReadRequest((byte) 0x01, (byte) 0x01,(byte)12));
+            this.dReaders.put(UUIDUtil.DESC_CCC, new HIDReportCCCDReadRequest());
+            this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL, new BASReadRequest());
             //TODO Check if Report descriptors need write functions from Host
             //TODO Check if Any Characteristics need Write functions from Host
         }
@@ -162,7 +163,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         NotificationTimer.purge();
         TimerTask t = new HIDReportNotifier().onTimedNotifyCharacteristics(
                         gattServer,device,
-                        activeServices.get(UUIDUtil.SERVICE_HID.toString()).getCharacteristic(UUIDUtil.CHAR_REPORT),
+                        Objects.requireNonNull(activeServices.get(UUIDUtil.SERVICE_HID.toString())).getCharacteristic(UUIDUtil.CHAR_REPORT),
                         dataPipe);
         NotificationTimer.scheduleAtFixedRate(t,500,10);//Wait half a second before firing first then 15ms after
     }
@@ -332,14 +333,14 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
                     ((PermissionHandlerDelegate)parentActivity).RegisterRequests(s);
                 }
             }
-            if(requires.size()>0){
+            if(!requires.isEmpty()){
                 String[] requiredPerm = new String[requires.size()];
                 requiredPerm= requires.toArray(requiredPerm);
                 ActivityCompat.requestPermissions(parentActivity, requiredPerm,2); //Could use request code for a hashed event system from activity
             }
         }
     }
-    protected class BTPermissionHandle implements PermissionsHandle{
+    protected static class BTPermissionHandle implements PermissionsHandle{
         protected BTPermissionHandle(String permission){
             Permission = permission;
         }
@@ -356,6 +357,7 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
         public String Rationale() {
             return null;
         }
+        @NonNull
         @Override
         public String toString(){
             return new String(Arrays.copyOf(Permission.toCharArray(),Permission.length()));

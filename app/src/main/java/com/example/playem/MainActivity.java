@@ -17,8 +17,6 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements PermissionHandlerDelegate {
     private ExecutorService BLEManagerExecutorPool;
-
-    private byte[] ReportMap;
     PlayEmBTManager mBTManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {

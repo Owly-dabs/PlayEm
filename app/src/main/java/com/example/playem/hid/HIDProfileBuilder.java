@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Stack;
 //TODO Implement Report ID for multi virtual devices
 public class HIDProfileBuilder {
@@ -21,9 +19,8 @@ public class HIDProfileBuilder {
         Top = new ArrayList<>();
         Bottom = new Stack<>();
     }
-    private List<Byte> Top;
-    private Stack<Byte> Bottom;
-    private byte[] ReportMap;
+    private final List<Byte> Top;
+    private final Stack<Byte> Bottom;
 
     private int axes_count = 0;
     public void Build(){
@@ -161,13 +158,13 @@ public class HIDProfileBuilder {
         if(!Bottom.isEmpty()){
             throw new RuntimeException("HID Report Map was improperly closed!");
         }
-        ReportMap = new byte[Top.size()];
+        byte[] reportMap = new byte[Top.size()];
         for(int i = 0;i<Top.size();i++){
-            ReportMap[i] = Top.get(i);
+            reportMap[i] = Top.get(i);
         }
         //DEBUG only
-        Log.w("REPORTMAP",HIDUtils.bytesToHex(ReportMap));
-        return ReportMap;
+        //Log.w("REPORTMAP",HIDUtils.bytesToHex(reportMap));
+        return reportMap;
     }
 
     public HashMap<Integer, HIDChunk> GetChunks(){

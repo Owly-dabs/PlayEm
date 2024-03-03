@@ -13,7 +13,7 @@ public class HIDReportRRDReadRequest implements BLEDescriptorReadRequest {
     public HIDReportRRDReadRequest(byte nIds,byte reportType,byte maxBufferSize){
         this.RRD = new byte[]{0x00,0x01};//nIds,reportType};//Page 29 of 123
     }
-    private byte[] RRD; //= new byte[]{(byte) 0x02,0x01};
+    private final byte[] RRD; //= new byte[]{(byte) 0x02,0x01};
     @Override
     public Runnable onDescriptorReadRequest(BluetoothGattServer gattServer, BluetoothDevice device, int requestId, int offset, BluetoothGattDescriptor descriptor) {
         return new Runnable() {
