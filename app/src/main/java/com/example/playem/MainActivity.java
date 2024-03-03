@@ -4,16 +4,46 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 
 import com.example.playem.btmanager.PlayEmBTManager;
+import com.example.playem.hid.HIDProfileBuilder;
+import com.example.playem.pipes.PlayEmDataPipe;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements PermissionHandlerDelegate {
+    private ExecutorService BLEManagerExecutorPool;
 
+    private byte[] ReportMap;
+    PlayEmBTManager mBTManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        PlayEmBTManager mBTManager = new PlayEmBTManager(this);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        Button bleAdvertButton = findViewById(R.id.bAdvertise);
+        bleAdvertButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBTManager.AdvertiseHID();
+            }
+        });
+        this.BLEManagerExecutorPool = Executors.newSingleThreadExecutor(); //Executors.newFixedThreadPool(2);
+        mBTManager = new PlayEmBTManager(this,this.BLEManagerExecutorPool,this.getMainExecutor());
+        BuildAndPipeAll();
+    }
+
+    public void BuildAndPipeAll(/*TODO Input GUI objects to bind to*/){
+
+        HIDProfileBuilder builder = new HIDProfileBuilder();
+        builder.Build();
+        //Needs chunking now
+        PlayEmDataPipe dataPipe = new PlayEmDataPipe(builder.GetChunks());
+        mBTManager.GattServerInit(builder.GetReportMap(),new byte[]{},dataPipe);
     }
 
     @Override
