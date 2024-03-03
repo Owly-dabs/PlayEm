@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 
+import com.example.playem.btmanager.GattResponse;
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
 import com.example.playem.pipes.PlayEmDataPipe;
 
@@ -24,9 +25,9 @@ public class HIDReportCReadRequest implements BLECharacteristicsReadRequest {
             public void run(){
                 synchronized (HidReportRef){
                     if(offset>=HidReportRef.getTsize()){
-                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,HidReportRef.GetReport());
+                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,0,EmptyResponse);
                     }else{
-                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset,EmptyResponse);
+                        gattServer.sendResponse(device,requestId, BluetoothGatt.GATT_SUCCESS,offset, HidReportRef.GetReport() );//GattResponse.Slice(HidReportRef.GetReport(),offset));
                     }
                 }
             }
