@@ -5,10 +5,7 @@ import android.bluetooth.BluetoothDevice;
 public class GattResponse {
     public BluetoothDevice device;
     public int requestId;
-    public int ReponseStatus;
     public int offset;
-    public byte[] data;
-
     public static byte[] Slice(byte[] data,int offset){
         if(offset>=data.length){
             return new byte[]{}; //Empty
