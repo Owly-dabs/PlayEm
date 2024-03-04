@@ -1,4 +1,4 @@
-package com.example.playem;
+package com.example.playem.generics;
 import java.util.HashMap;
 
 public interface PermissionHandlerDelegate {
