@@ -26,21 +26,20 @@ public class PlayEmDataPipe {
         if(chunks.containsKey(HIDChunk.CalHash(ChunkType.AXES,0))){
             aChunk = chunks.get(HIDChunk.CalHash(ChunkType.AXES,0));
             tsize += aChunk != null ? aChunk.size : 0;
-            ButtonsData.add(aChunk); //Initialized to 0x00
+            AxesData.add(aChunk); //Initialized to 0x00
         }
         CurrentTruth.add((new byte[tsize]));
     }
     // Button No. is 0 indexed
-    public void UpdateButtonNumber(int bNo, byte activeTrue){
-        Log.i("PIPE",String.format("Update Button called %d %d",bNo,activeTrue));
+    public void UpdateButtonNumber(int bNo, boolean activeTrue){
+        //Log.i("PIPE",String.format("Update Button called %d %s",bNo,activeTrue?"true":false));
         int byteIndex = bNo/8; //Buttons are always start at 0
-        activeTrue = activeTrue>0x01?0x01:activeTrue;
         synchronized (this){
             byte[] bArray = CurrentTruth.get(0);
-            if(activeTrue>0){
-                bArray[byteIndex] = (byte) (bArray[byteIndex]|(activeTrue<<bNo));
+            if(activeTrue){
+                bArray[byteIndex] = (byte) (bArray[byteIndex]|(1<<bNo));
             }else{
-                bArray[byteIndex] = (byte) ((bArray[byteIndex]|((1<<bNo)-1))&activeTrue<<bNo);
+                bArray[byteIndex] = (byte) ~((~bArray[byteIndex])|1<<bNo);
             }
             signalDirty = true;
             //Log.i("PIPE",String.format("Update Button called %d %8s",bNo,Integer.toBinaryString(CurrentTruth.get(0)[byteIndex]).replace(" ","0")));
@@ -49,7 +48,7 @@ public class PlayEmDataPipe {
 
     //Axes No are 0 indexed
     public void UpdateAxis(int aNo, int value, boolean isNeg){
-        value = isNeg? (value + 0xFFFF): value;
+        value = isNeg? (value + 0x0FFFF): value;
         synchronized (this) {
             HIDChunk axesData = AxesData.get(0);
             if (aNo >= axesData.size / 2) {
