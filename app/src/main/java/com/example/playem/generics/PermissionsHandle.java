@@ -1,4 +1,4 @@
-package com.example.playem;
+package com.example.playem.generics;
 
 public interface PermissionsHandle {
     public void NotGranted();
