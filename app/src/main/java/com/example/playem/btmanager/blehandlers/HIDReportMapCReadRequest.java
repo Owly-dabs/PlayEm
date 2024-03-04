@@ -7,13 +7,11 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 import android.util.Log;
 
-import com.example.playem.btmanager.GattResponse;
+import com.example.playem.btmanager.blehandlers.interfaces.GattResponse;
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
 import com.example.playem.hid.HIDUtils;
-import com.example.playem.hid.usagepages.HID_Profile_Defaults;
 
-import java.util.HexFormat;
-
+//TODO: What happens if we directly change the report maps?
 public class HIDReportMapCReadRequest implements BLECharacteristicsReadRequest {
     public HIDReportMapCReadRequest (byte[] reportMap){
         ReportMap = new byte[reportMap.length];

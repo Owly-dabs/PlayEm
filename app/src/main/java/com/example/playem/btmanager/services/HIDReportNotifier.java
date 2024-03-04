@@ -1,4 +1,4 @@
-package com.example.playem.btmanager.blehandlers;
+package com.example.playem.btmanager.services;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
