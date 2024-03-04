@@ -1,5 +1,6 @@
 package com.example.playem.pipes;
 
-public interface BytePipe {
+public class InputPipe {
+
 
 }
