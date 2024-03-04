@@ -1,3 +1,6 @@
+#Reference documents
+*.pdf
+*.playemDoc
 # Gradle files
 .gradle/
 build/
