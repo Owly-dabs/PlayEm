@@ -1,4 +1,4 @@
-package com.example.playem.btmanager;
+package com.example.playem.btmanager.blehandlers.interfaces;
 
 import android.bluetooth.BluetoothDevice;
 
