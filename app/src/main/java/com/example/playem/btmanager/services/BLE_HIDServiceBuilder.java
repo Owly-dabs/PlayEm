@@ -9,8 +9,6 @@ import android.bluetooth.le.AdvertiseSettings;
 import android.os.ParcelUuid;
 import android.util.Log;
 
-import com.example.playem.btmanager.UUIDUtil;
-
 import java.util.Queue;
 
 public class BLE_HIDServiceBuilder {
@@ -136,21 +134,20 @@ public class BLE_HIDServiceBuilder {
 
             //Setup Advertisements HOGP 3.1.3 pg13+
             AdvertiseSettings advertiseSettings = new AdvertiseSettings.Builder()
-                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
                     .setConnectable(true)
                     .setTimeout(0).build(); //Should set to some finite value after testing
             AdvertiseData advertiseData = new AdvertiseData.Builder()
-                    //.addServiceData(ParcelUuid.fromString(UUIDUtil.ADVERT_APPEARANCE.toString()),new byte[]{0x03,(byte)0xC4}) //Either in Advertise or Scan result GamePad Icon
+                    .setIncludeTxPowerLevel(false)
                     .setIncludeDeviceName(true) //Not sure if LOCAL Name refers to UUID Advert_LOCAL_Name or Datatype 0x09 setting to device name first
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_HID.toString()))
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_DIS.toString()))
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_BAS.toString())).build();
 
-            /*AdvertiseData scanResult = new AdvertiseData.Builder()
-                    .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_HID.toString()))
-                    .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_DIS.toString()))
-                    .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_BAS.toString())).build();*/
+            AdvertiseData scanResult = new AdvertiseData.Builder()
+                    .addServiceData(ParcelUuid.fromString(UUIDUtil.ADVERT_APPEARANCE.toString()),new byte[]{0x03,(byte)0xC4}) //Either in Advertise or Scan result GamePad Icon
+                    .build();
 
             toAddServices.add(DIS_Service);
             toAddServices.add(HID_Service);
@@ -158,7 +155,7 @@ public class BLE_HIDServiceBuilder {
 
             toAddAdvertisementSetting.add(advertiseSettings);
             toAddAdvertisementData.add(advertiseData);
-            //toAddAdvertisementData.add(scanResult);
+            toAddAdvertisementData.add(scanResult);
             return true;
         }
         catch(Exception e){
