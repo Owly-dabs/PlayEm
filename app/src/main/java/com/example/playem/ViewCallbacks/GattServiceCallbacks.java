@@ -12,6 +12,8 @@ public interface GattServiceCallbacks {
     Runnable onAdvertisementStateChanged(PlayEmGATTService.SERVICE_STATES state);
     Runnable onNotifierChanged(PlayEmGATTService.SERVICE_STATES state);
     Runnable onServicesAddComplete(PlayEmGATTService.SERVICE_STATES state);
+    Runnable onServiceReady(PlayEmGATTService.SERVICE_STATES state);
+    Runnable onGattStatusChanged(PlayEmGATTService.SERVICE_STATES state);
 
 
 }
