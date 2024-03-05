@@ -1,11 +1,9 @@
-package com.example.playem;
+package com.example.playem.generics;
 
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 
 public abstract class PermissionsHandler {
     public PermissionsHandler(String GroupName, PermissionsHandle[] Permissions_to_track){
