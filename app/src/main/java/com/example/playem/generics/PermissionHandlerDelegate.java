@@ -1,4 +1,6 @@
 package com.example.playem.generics;
+import android.app.Activity;
+
 import java.util.HashMap;
 
 public interface PermissionHandlerDelegate {
@@ -7,5 +9,6 @@ public interface PermissionHandlerDelegate {
 //Apps should initiate their permission request through ContextCompact
     HashMap<String,PermissionsHandle> pending = new HashMap<>();
     void DeregisterRequests(String permissions);
+    void SetFocusedActivity(Activity activity);
 }
 

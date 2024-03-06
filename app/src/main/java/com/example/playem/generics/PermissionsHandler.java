@@ -1,9 +1,8 @@
 package com.example.playem.generics;
 
+import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.util.Log;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 public abstract class PermissionsHandler {
     public PermissionsHandler(String GroupName, PermissionsHandle[] Permissions_to_track){
@@ -14,7 +13,7 @@ public abstract class PermissionsHandler {
     private PermissionsHandle[] Permissions;
     private int permissionsmask = 0;
 
-    public boolean CheckAllPermissions(AppCompatActivity context){
+    public boolean CheckAllPermissions(Activity context){
         int m = 0;
         int mask = 0;
         boolean clean = true;
@@ -29,6 +28,5 @@ public abstract class PermissionsHandler {
         permissionsmask = mask;
         return clean;
     }
-    protected abstract void RequestMissingPermissions(AppCompatActivity context);
-
+    protected abstract void RequestMissingPermissions(Activity context);
 }
