@@ -43,40 +43,42 @@ public class PlayEmGATTService extends Service{
     }
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
-    //private BluetoothDevice lastknowndevice;
-//Blocking call to thread of caller
-    public GattServiceState DeferredConstructor(Activity appActivity){ //Get States here
+
+    public void DeferredConstructor(Activity appActivity){ //Get States here
         if(!_constructed){
             executorPool = Executors.newSingleThreadExecutor();
             executorPool.execute(()->{
                 bluetoothManager = getBluetoothManager();
-                //this.appActivity = appActivity;
                 dataChunks = new HashMap<>();
                 bluetoothAdapter =  bluetoothManager.getAdapter();
                 if(btManager == null){
                     btManager = new PlayEmBTManager(this,executorPool,mediator,bluetoothManager);
                 }
                 _constructed = true;
-                mediator.onServiceReady(SERVICE_STATES.ACTION_SUCCESS); //Decouple build sequence and give responsibility to activity
                 btPermissionHandler = new BluetoothPermissionsHandler();
-                btPermissionHandler.CheckBTPermissions();
+                btPermissionHandler.SetFocusedActivity(appActivity);
+                if(btPermissionHandler.CheckBTPermissions())
+                    currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;
+                else
+                    Log.e("PERM","Showing as no permissions granted");
                 checkBTEnabled();
-                currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;
+                mediator.onServiceStatusChanged(null);
             });
         }
         this.focusedActivity = appActivity;
-        return getLastValidState();
     }
-    private GattServiceState currentState= new GattServiceState ("DISCONNECT","--:--:--:--:--","INVALID","", GattServiceState.SERVICE_STATUS.NOT_INIT);
+    private final GattServiceState currentState= new GattServiceState ("DISCONNECT","--:--:--:--:--","INVALID","", GattServiceState.SERVICE_STATUS.NOT_INIT);
     public GattServiceState getLastValidState(){
-
-        return new GattServiceState(currentState.name, currentState.address,currentState.bondstate,currentState.bondableList,currentState.status );
-    }
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                                       @NonNull int[] grantResults){
-        if(btPermissionHandler!=null){
-            btPermissionHandler.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        synchronized (currentState){
+            return new GattServiceState(currentState.name, currentState.address,currentState.bondstate,currentState.bondableList,currentState.status );
         }
+    }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,@NonNull int[] grantResults){
+        executorPool.execute(()->{
+            if(btPermissionHandler!=null){
+                btPermissionHandler.onRequestPermissionsResult(requestCode,permissions,grantResults);
+            }
+        });
     }
     private final ServiceHandler<Activity,GattServiceCallbacks> activityGattServiceCallback = new ServiceHandler<>(5);
     private boolean _constructed = false;
@@ -86,7 +88,7 @@ public class PlayEmGATTService extends Service{
     public PlayEmDataPipe dataPipe;
     private Activity focusedActivity;
     private HashMap<Integer, HIDChunk> dataChunks;
-    private BroadcastReceiver bondstateReceiver;
+    private BroadcastReceiver bondStateReceiver;
     private int notificationID = 1;
     protected void BuildPipe(){
         if(_constructed){
@@ -96,7 +98,7 @@ public class PlayEmGATTService extends Service{
                 dataPipe = new PlayEmDataPipe(builder.GetChunks());
                 dataChunks = builder.GetChunks();
                 btManager.GattServerInit(builder.GetReportMap(),new byte[]{},dataPipe);
-                registerReceiver(bondstateReceiver = btManager.bondStateReceiver(),new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+                registerReceiver(bondStateReceiver = btManager.bondStateReceiver(),new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
             });
         }
     }
@@ -146,11 +148,14 @@ public class PlayEmGATTService extends Service{
     }
     protected void SubscribeToEventBus(Activity activity,GattServiceCallbacks callbacks){
         activityGattServiceCallback.PutPair(activity,callbacks);
+        if(btPermissionHandler!=null)
+            btPermissionHandler.SetFocusedActivity(activity);
         focusedActivity = activity;
     }
 
     protected void UnsubscribeFromEventBus(Activity activity){
         activityGattServiceCallback.Remove(activity);
+        btPermissionHandler.SetFocusedActivity(null);
         focusedActivity = null;
     }
 
@@ -230,6 +235,9 @@ public class PlayEmGATTService extends Service{
 
         @Override
         public Runnable onServiceReady(SERVICE_STATES state) {
+            if(currentState.status.ordinal()< GattServiceState.SERVICE_STATUS.IDLE_NODATA.ordinal())
+                currentState.status = GattServiceState.SERVICE_STATUS.PERMISSIONS_WAIT;
+            this.onServiceStatusChanged(null);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
                 Runnable activityAction = activityGattServiceCallback.Get(i).onServiceReady(state);//Todo ensure all calls are nullable
@@ -301,8 +309,8 @@ public class PlayEmGATTService extends Service{
 
     @Override
     public void onDestroy(){
-        if(bondstateReceiver!=null)
-            unregisterReceiver(bondstateReceiver);
+        if(bondStateReceiver!=null)
+            unregisterReceiver(bondStateReceiver);
         if(btManager!=null)
             btManager.Close();
         if(executorPool!=null)
@@ -312,7 +320,6 @@ public class PlayEmGATTService extends Service{
     }
 
     private BluetoothPermissionsHandler btPermissionHandler;
-
 
     public class mBinder extends Binder{
         PlayEmGATTService getService(){

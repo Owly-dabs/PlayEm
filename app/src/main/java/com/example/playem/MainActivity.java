@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity{
         }
     }
     protected void UpdateViewFromGattState(GattServiceState state){
-        Log.i("UI","Callback from GattState");
+        Log.i("UI",String.format("Callback from GattState %s",state.status.toString()));
         int statusLvl = state.status.ordinal();
         boolean dc,test,advert,hidbuild;
         String sconnHost,sbondState,sbondables;

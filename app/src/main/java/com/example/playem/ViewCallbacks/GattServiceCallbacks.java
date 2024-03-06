@@ -12,7 +12,6 @@ public interface GattServiceCallbacks {
     default Runnable onConnectionStateChanged(String d_address, String d_name, PlayEmGATTService.SERVICE_STATES state){return null;}
     default Runnable onAdvertisementStateChanged(PlayEmGATTService.SERVICE_STATES state){return null;}
     default Runnable onNotifierChanged(PlayEmGATTService.SERVICE_STATES state){return null;}
-    //Internal operation callbacks are optional for UI;
     default Runnable onServicesAddComplete(PlayEmGATTService.SERVICE_STATES state) {return null;}
     default Runnable onServiceReady(PlayEmGATTService.SERVICE_STATES state){return null;}
     default Runnable onGattStatusChanged(GattServiceState.SERVICE_STATUS state){return null;};

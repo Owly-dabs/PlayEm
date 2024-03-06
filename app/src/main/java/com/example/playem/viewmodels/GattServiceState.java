@@ -1,10 +1,6 @@
 package com.example.playem.viewmodels;
 
-import android.annotation.SuppressLint;
-
 public class GattServiceState {
-
-    @SuppressLint("MissingPermission")
     public GattServiceState(String name, String address, String BondState,String bondable, SERVICE_STATUS serviceStatus){
         this.name = name;
         this.address = address;
@@ -22,6 +18,7 @@ public class GattServiceState {
     public enum SERVICE_STATUS{
         NOT_INIT,
         NO_FOCUS,
+        PERMISSIONS_WAIT,
         IDLE_NODATA,
         BUILT_READY_BROADCAST,
         ADVERT,

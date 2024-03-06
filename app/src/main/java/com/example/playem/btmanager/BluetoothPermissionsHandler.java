@@ -17,13 +17,15 @@ import java.util.Objects;
 public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
     private Activity focusedActivity;
 
-    public void CheckBTPermissions(){
+    public boolean CheckBTPermissions(){
         if(focusedActivity!=null){
             BTPermissionHandler permissionHandler = new BTPermissionHandler("PlayEm BT Manager", btPermissionsHandles);
             if(!permissionHandler.CheckAllPermissions(focusedActivity)) {
                 permissionHandler.RequestMissingPermissions(focusedActivity);
             }
+            return true;
         }
+        return false;
     }
     private static final PermissionsHandle[] btPermissionsHandles = new PermissionsHandle[]{
             new BTPermissionHandle(android.Manifest.permission.BLUETOOTH_CONNECT),
@@ -44,23 +46,23 @@ public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
         }
     }
 
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+    public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         //focusedActivity.onRequestPermissionsResult(requestCode, permissions, grantResults);
         for(int i =0;i<permissions.length;i++){
             PermissionsHandle ph =this.pending.get(permissions[i]);
             if(ph==null){
                 Log.e("PERM","Empty PermissionsHandle Object");
+                continue;
             }
-            assert ph != null;
-            if(grantResults[i]== PackageManager.PERMISSION_GRANTED){
+            if(grantResults[i]== PackageManager.PERMISSION_GRANTED)
                 ph.Granted();
-            }
-            else{
+            else
                 ph.NotGranted();
-            }
+
             DeregisterRequests(ph.getPermission());
         }
+        return pending.isEmpty();
     }
 
     @Override
