@@ -10,8 +10,8 @@ import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
-import com.example.playem.InteractableElements.ControllerButton;
-import com.example.playem.InteractableElements.ThumbStick;
+import com.example.playem.InteractableElements.*;
+//import com.example.playem.InteractableElements.ThumbStick;
 import com.example.playem.R;
 
 // ControllerEmulator manages all objects inside of the Controller Emulator state
@@ -37,8 +37,7 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         CELoop = new ControllerEmulatorLoop(this, surfaceHolder);
 
         // Instantiate Joysticks and buttons
-        thumbStick = new ThumbStick(275, 350, 50, // for testing
-                                    70); // for testing
+        thumbStick = new ThumbStick(275, 350, 50, 70); // for testing
         button = new ControllerButton(275, 500, 50); //for testing
 
         //set focus to true
@@ -56,15 +55,18 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
                 thumbStick.handleActionDown((double) event.getX(), (double) event.getY()); // for testing
                 button.handleActionDown((double) event.getX(), (double) event.getY()); // for testing
                 return true;
+                // run ElementHandler.handleActionDown(...)
             case MotionEvent.ACTION_MOVE:
                 thumbStick.handleActionMove((double) event.getX(), (double) event.getY()); // for testing
                 return true;
+                // run ElementHandler.handleActionUp(...)
             case MotionEvent.ACTION_UP:
                 thumbStick.handleActionUp(); // for testing
                 button.handleActionUp(); // for testing
+                //run ElementHandler.handleActionDown(...)
                 return true;
 
-        } return super.onTouchEvent(event);
+        } return super.onTouchEvent(event); // return elementHandler.output()
     }
 
     @Override

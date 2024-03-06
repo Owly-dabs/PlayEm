@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.view.SurfaceHolder;
 
 class ControllerEmulatorLoop extends Thread{
-    private static final double MaxUps = 60;
+    private static final double MaxUps = 100;
     private static final double TargetUpsPeriod = 1E+3/MaxUps;
     private boolean isRunning = false;
     private SurfaceHolder surfaceHolder;

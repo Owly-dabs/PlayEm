@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 
-
+// Not used will be removed later
 public class ThumbStick extends SpriteBaseClass implements GestureElement{
 
     private final Paint InnerCirclePaint;
