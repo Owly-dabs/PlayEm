@@ -1,6 +1,7 @@
 package com.example.playem;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -44,9 +45,10 @@ public class PlayEmGATTService extends Service{
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
 
+    @SuppressLint("MissingPermission")
     public void DeferredConstructor(Activity appActivity){ //Get States here
         if(!_constructed){
-            executorPool = Executors.newSingleThreadExecutor();
+            executorPool = Executors.newFixedThreadPool(4);
             executorPool.execute(()->{
                 bluetoothManager = getBluetoothManager();
                 dataChunks = new HashMap<>();
@@ -62,17 +64,17 @@ public class PlayEmGATTService extends Service{
                 else
                     Log.e("PERM","Showing as no permissions granted");
                 checkBTEnabled();
+                bluetoothAdapter.setName("PlayEm_DEBUG");
                 mediator.onServiceStatusChanged(null);
             });
         }
         this.focusedActivity = appActivity;
     }
-    private final GattServiceState currentState= new GattServiceState ("DISCONNECT","--:--:--:--:--","INVALID","", GattServiceState.SERVICE_STATUS.NOT_INIT);
+    private GattServiceState currentState = new GattServiceState ("DISCONNECT","--:--:--:--:--","INVALID","", GattServiceState.SERVICE_STATUS.NOT_INIT,false);
     public GattServiceState getLastValidState(){
-        synchronized (currentState){
-            return new GattServiceState(currentState.name, currentState.address,currentState.bondstate,currentState.bondableList,currentState.status );
-        }
+        return currentState.copy(currentState.Objectdirty);
     }
+
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,@NonNull int[] grantResults){
         executorPool.execute(()->{
             if(btPermissionHandler!=null){
@@ -89,7 +91,7 @@ public class PlayEmGATTService extends Service{
     private Activity focusedActivity;
     private HashMap<Integer, HIDChunk> dataChunks;
     private BroadcastReceiver bondStateReceiver;
-    private int notificationID = 1;
+
     protected void BuildPipe(){
         if(_constructed){
             executorPool.execute(()->{
@@ -134,15 +136,29 @@ public class PlayEmGATTService extends Service{
             });
         }
     }
-
     protected void Disconnect(){
+        this.Disconnect(false);
+    }
+    protected void Disconnect(boolean forceBondRemoval){
         executorPool.execute(()->{
             if(_constructed){
-                btManager.Disconnect();
+                btManager.StopAdvertisement();
+                btManager.Disconnect(forceBondRemoval);
+                btManager.Close();
+                _constructed = false;
+                dataPipe = null;
+                mediator.onGattStatusChanged(GattServiceState.SERVICE_STATUS.NOT_INIT);
+                btManager = null;
+                DeferredConstructor(this.focusedActivity);
             }
         });
     }
-
+    public PlayEmDataPipe GetPipe(){
+        if(dataPipe!=null){
+            return  dataPipe;
+        }
+        return null;
+    }
     protected HashMap<Integer,HIDChunk> GetHidChunks(){
         return dataChunks;
     }
@@ -170,12 +186,29 @@ public class PlayEmGATTService extends Service{
             }
             return null;
         }
+        @SuppressLint("MissingPermission")
         @Override
         public Runnable onConnectionStateChanged(String d_address, String d_name, SERVICE_STATES state) {
-            if(state == SERVICE_STATES.BLUETOOTH_DEVICE_CONNECTED)
-                currentState.status = GattServiceState.SERVICE_STATUS.CONNECTED_IDLE;
-            else
-                currentState.status = GattServiceState.SERVICE_STATUS.ADVERT;
+            if(state == SERVICE_STATES.BLUETOOTH_DEVICE_CONNECTED){
+                BluetoothDevice btd= bluetoothAdapter.getRemoteDevice(d_address);
+                if(btd.getBondState() == BluetoothDevice.BOND_BONDED){
+                   if(currentState.status.ordinal() < GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST.ordinal()){
+                       currentState.status = GattServiceState.SERVICE_STATUS.DONT_TOUCHME;
+                   }else{
+                       currentState.status = GattServiceState.SERVICE_STATUS.CONNECTED_IDLE;
+                   }
+                }else{
+                    currentState.status = GattServiceState.SERVICE_STATUS.CONNECTING;
+                }
+                currentState.address = d_address;
+                currentState.name = d_name==null?"Unknown":d_name;
+                currentState.bondstate = btd.getBondState()==BluetoothDevice.BOND_BONDED?"BONDED":"NO BOND";
+            }
+            else{
+                if(currentState.status.ordinal()>= GattServiceState.SERVICE_STATUS.ADVERT.ordinal()){
+                    currentState.status = GattServiceState.SERVICE_STATUS.ADVERT;
+                }
+            }
             this.onServiceStatusChanged(null);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
@@ -203,10 +236,11 @@ public class PlayEmGATTService extends Service{
 
         @Override
         public Runnable onNotifierChanged(SERVICE_STATES state) {
-            if(state==SERVICE_STATES.NOTIFY_ATTACHED)
+            if(state==SERVICE_STATES.NOTIFY_ATTACHED){
                 currentState.status = GattServiceState.SERVICE_STATUS.NOTIFY;
-            else
-                currentState.status = GattServiceState.SERVICE_STATUS.CONNECTED_IDLE;
+            }else{
+                currentState.status = GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST;
+            }
             this.onServiceStatusChanged(null);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
@@ -219,10 +253,14 @@ public class PlayEmGATTService extends Service{
 
         @Override
         public Runnable onServicesAddComplete(SERVICE_STATES state) {
-            if(state == SERVICE_STATES.ACTION_SUCCESS)
-                currentState.status = GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST;
-            else
-                currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;
+            if(state == SERVICE_STATES.ACTION_SUCCESS){
+                if(currentState.status== GattServiceState.SERVICE_STATUS.DONT_TOUCHME){
+                    currentState.status = GattServiceState.SERVICE_STATUS.CONNECTED_IDLE;
+                }else{
+                    currentState.status = GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST;}
+                }
+            else{
+                currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;}
             this.onServiceStatusChanged(null);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
@@ -249,20 +287,22 @@ public class PlayEmGATTService extends Service{
 
         @Override
         public Runnable onGattStatusChanged(GattServiceState.SERVICE_STATUS state) {
+            if(state== GattServiceState.SERVICE_STATUS.NOT_INIT)
+                currentState = new GattServiceState("DISCONNECTED","(INVALID)","S_CLOSE","NO_LIST", GattServiceState.SERVICE_STATUS.NOT_INIT,true);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
                 Runnable activityAction = activityGattServiceCallback.Get(i).onGattStatusChanged(state);
                 if(activityAction!=null)
                     a.runOnUiThread(activityAction);
             }
-            return null;
+            return onServiceStatusChanged(null);
         }
 
         @Override
         public Runnable onServiceStatusChanged(GattServiceState newServiceState){
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
-                Runnable activityAction = activityGattServiceCallback.Get(i).onServiceStatusChanged(currentState.copy());
+                Runnable activityAction = activityGattServiceCallback.Get(i).onServiceStatusChanged(currentState.copy(currentState.Objectdirty));
                 if(activityAction!=null)
                     a.runOnUiThread(activityAction);
             }
@@ -284,6 +324,7 @@ public class PlayEmGATTService extends Service{
                 .setContentTitle("PlayEm BLE")
                 .setContentText("Bluetooth is Running in the Background").build();
         //TODO Add buttons to disable or bring APP to foreground
+        int notificationID = 1;
         this.startForeground(notificationID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
     }
 
@@ -321,24 +362,24 @@ public class PlayEmGATTService extends Service{
 
     private BluetoothPermissionsHandler btPermissionHandler;
 
-    public class mBinder extends Binder{
-        PlayEmGATTService getService(){
-            return PlayEmGATTService.this;
-        }
+public class mBinder extends Binder{
+    PlayEmGATTService getService(){
+        return PlayEmGATTService.this;
     }
-    public enum SERVICE_STATES{
-        ADVERT_DISABLED,
-        ADVERT_ENABLED,
-        BLUETOOTH_DEVICE_DISCONNECT,
-        BLUETOOTH_DEVICE_CONNECTED,
-        CHUNK_READY,
-        ACTION_SUCCESS,
-        ACTION_FAIL,
-        NOTIFY_DETACHED,
-        NOTIFY_ATTACHED,
-        GATT_READY,
-        GATT_ERROR,
-        GATT_RUNNING
+}
+public enum SERVICE_STATES {
+    ADVERT_DISABLED,
+    ADVERT_ENABLED,
+    BLUETOOTH_DEVICE_DISCONNECT,
+    BLUETOOTH_DEVICE_CONNECTED,
+    CHUNK_READY,
+    ACTION_SUCCESS,
+    ACTION_FAIL,
+    NOTIFY_DETACHED,
+    NOTIFY_ATTACHED,
+    GATT_READY,
+    GATT_ERROR,
+    GATT_RUNNING
 
     }
 }
