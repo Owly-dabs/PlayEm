@@ -5,13 +5,15 @@ import android.graphics.Canvas;
 
 
 public abstract class SpriteBaseClass {
-    protected double CentreX;
-    protected double CentreY;
+    public double CentreX;
+    public double CentreY;
+
+    public double radius;
     public boolean ShouldRedraw;
 
     //add in bitmap for sprite image later
 
-
+    public SpriteBaseClass(){}
     public SpriteBaseClass(double CentreX, double CentreY, boolean ShouldRedraw) {
         // (X, Y) coordinate of sprite
         this.CentreX = CentreX;
@@ -19,11 +21,7 @@ public abstract class SpriteBaseClass {
         this.ShouldRedraw = ShouldRedraw;
     }
 
-    public double distanceToCentreSquared(double touchX, double touchY){
-        return Math.pow(CentreX-touchX, 2) + Math.pow(CentreY-touchY, 2);
-    }
 
-
-    protected void draw(Canvas canvas) {}
+    public void draw(Canvas canvas) {}
 
 }

@@ -5,7 +5,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 // Not used will be removed later
-public class ThumbStick extends SpriteBaseClass implements GestureElement{
+public class ThumbStick extends ControllerElement{
 
     private final Paint InnerCirclePaint;
     private final Paint OuterCirclePaint;
@@ -16,6 +16,7 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
     private boolean IsPressed;
     private double actuatorX;
     private double actuatorY;
+    private int pointerID = -1;
 
     //Constructor
     public ThumbStick(double CentreX, double CentreY,
@@ -26,7 +27,7 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
         // Defining Inner and Outer circle radii and positions
         this.InnerCirclePosX = CentreX;
         this.InnerCirclePosY = CentreY;
-        this.OuterCircleRadius = OuterCircleRadius;
+        super.radius = this.OuterCircleRadius = OuterCircleRadius;
         this.InnerCircleRadius = InnerCircleRadius;
 
         // Colour of ThumbSticks (temporary solution for now)
@@ -74,23 +75,25 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
         InnerCirclePosY = (int) CentreY + actuatorY*OuterCircleRadius*0.6;
     }
     @Override
-    public void handleActionDown(double touchX, double touchY) {
+    public void handleActionDown(double touchX, double touchY, int pointerID) {
         if (isPressed(touchX, touchY)) {
             this.IsPressed = true;
+            this.pointerID = pointerID;
             // add in or return any needed information from thumbStick press
             // IsPressed is the state of the button
         }
     }
     @Override
-    public void handleActionMove(double touchX, double touchY) {
-        if (IsPressed) {
+    public void handleActionMove(double touchX, double touchY, int pointerID) {
+        if (IsPressed && (this.pointerID == pointerID)) {
             setActuator(touchX, touchY);
             // add in or return any needed information from thumbStick move here
             // actuatorX and actuatorY are normalised values from within the thumbStick
         }
     }
     @Override
-    public void handleActionUp() {
+    public void handleActionUp(int pointerID) {
+        this.pointerID = -1;
         IsPressed = false;
         resetActuator();
     }
