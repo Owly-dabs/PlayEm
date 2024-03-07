@@ -11,16 +11,20 @@ import java.util.Map;
 
 // takes in an an array of interactable element object and loads in it into a hashmap
 public class ElementLoader {
-    //input array of elements
     private ControllerElement[] ELEMENTS;
-    // Instantiate Hashmap to store grid position as key and object as corresponding value
     private Map<Integer, List<ControllerElement>> PositionHashMap = new HashMap<>();
-    // chosen from average screen size 16:9 -> 32:18 (32*18)
-    public static final int NUM_GRIDS = 576;
-    // Calculate plane size in pixels (width * height) and divide by the number of grids (NUM_GRIDS)
+//    private static final DisplayMetrics displayMetrics = new DisplayMetrics();
+//    private int lengthX = displayMetrics.widthPixels;
+//    private int lengthY = displayMetrics.heightPixels;
+
+    public static final int NUM_GRIDS = 576; // chosen from average screen size 16:9 -> 32:18 (32*18)
     public static double gridSize = (Resources.getSystem().getDisplayMetrics().widthPixels *
                             Resources.getSystem().getDisplayMetrics().heightPixels)/ (double) NUM_GRIDS;
 
+//    public ElementLoader(){
+//        int PlaneSize = lengthX * lengthY;
+//        gridSize = PlaneSize/ NUM_GRIDS;
+//    }
 
     // Hashing may be expensive but only has to be done once when loading chosen elements
     // As we may have to check every grid (NUM_GRIDS) to see if the element falls in it
@@ -38,7 +42,7 @@ public class ElementLoader {
             for (int y=minGridY; y<=maxGridY; y++) {
                 int key = x * NUM_GRIDS + y;
                 if (!PositionHashMap.containsKey(key)) {
-                    PositionHashMap.put(key, new ArrayList<>());
+                    PositionHashMap.put(key, new ArrayList());
                 } PositionHashMap.get(key).add(element);
             }
         }
