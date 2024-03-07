@@ -1,11 +1,12 @@
 package com.example.playem.btmanager.services;
 
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.le.AdvertiseData;
-import android.bluetooth.le.AdvertiseSettings;
+import android.bluetooth.le.AdvertisingSetParameters;
 import android.os.ParcelUuid;
 import android.util.Log;
 
@@ -16,7 +17,7 @@ public class BLE_HIDServiceBuilder {
     //TODO: Appearance Service
     @SuppressLint("MissingPermission")
     //AdvertisementData is set in the order of Data followed by Scan results
-    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertiseSettings> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData){
+    public static boolean Build(Queue<BluetoothGattService> toAddServices,Queue<AdvertisingSetParameters> toAddAdvertisementSetting,Queue<AdvertiseData> toAddAdvertisementData){
         try{
             BluetoothGattService HID_Service = new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService BAT_Service = new BluetoothGattService(UUIDUtil.SERVICE_BAS,BluetoothGattService.SERVICE_TYPE_PRIMARY);
@@ -102,6 +103,7 @@ public class BLE_HIDServiceBuilder {
                 C_Report_CCCD.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             Report_C.addDescriptor(C_Report_CCCD);
             Report_C.addDescriptor(C_Report_RRD);
+
             HID_Service.addCharacteristic(Report_C);
 
             //Protocol Mode
@@ -131,29 +133,41 @@ public class BLE_HIDServiceBuilder {
             );
             //HIDControlPoint.setValue(new byte[]{0x00}); //Enable to get signal of sleep state from host
             HID_Service.addCharacteristic(HIDControlPoint);
-
+            AdvertisingSetParameters advertisingSetParameters = new AdvertisingSetParameters.Builder()
+                    .setLegacyMode(false)
+                    .setConnectable(true)
+                    .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
+                    .setIncludeTxPower(true)
+                    .setInterval(AdvertisingSetParameters.INTERVAL_MIN)
+                    .setPrimaryPhy(BluetoothDevice.PHY_LE_1M)
+                    .setSecondaryPhy(BluetoothDevice.PHY_LE_2M)
+                    .build();
+/*
             //Setup Advertisements HOGP 3.1.3 pg13+
             AdvertiseSettings advertiseSettings = new AdvertiseSettings.Builder()
-                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
-                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
+                    .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                    .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
                     .setConnectable(true)
-                    .setTimeout(0).build(); //Should set to some finite value after testing
+                    //.setDiscoverable(true)
+                    .setTimeout(0).build(); //Should set to some finite value after testing*/
             AdvertiseData advertiseData = new AdvertiseData.Builder()
-                    .setIncludeTxPowerLevel(false)
-                    .setIncludeDeviceName(true) //Not sure if LOCAL Name refers to UUID Advert_LOCAL_Name or Datatype 0x09 setting to device name first
+                    .setIncludeTxPowerLevel(true)
+                    .setIncludeDeviceName(true)
+                    .addServiceData(ParcelUuid.fromString("00000009"+UUIDUtil.BTBaseNumber),"Fgrgr5r_Con".getBytes()) //Not sure if LOCAL Name refers to UUID Advert_LOCAL_Name or Datatype 0x09 setting to device name first
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_HID.toString()))
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_DIS.toString()))
                     .addServiceUuid(ParcelUuid.fromString(UUIDUtil.SERVICE_BAS.toString())).build();
 
             AdvertiseData scanResult = new AdvertiseData.Builder()
-                    .addServiceData(ParcelUuid.fromString(UUIDUtil.ADVERT_APPEARANCE.toString()),new byte[]{0x03,(byte)0xC4}) //Either in Advertise or Scan result GamePad Icon
+                    //00F4
+                    .addServiceData(ParcelUuid.fromString("00000019-0000-1000-8000-00805F9B34FB"),new byte[]{0x03,(byte)0xC4}) //Either in Advertise or Scan result GamePad Icon
                     .build();
 
             toAddServices.add(DIS_Service);
             toAddServices.add(HID_Service);
             toAddServices.add(BAT_Service); //Caller must start service add function;
 
-            toAddAdvertisementSetting.add(advertiseSettings);
+            toAddAdvertisementSetting.add(advertisingSetParameters);
             toAddAdvertisementData.add(advertiseData);
             toAddAdvertisementData.add(scanResult);
             return true;
