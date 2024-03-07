@@ -16,8 +16,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
+import com.example.playem.testutils.saturationTest;
 import com.example.playem.viewmodels.GattServiceState;
 
+import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity{
@@ -56,7 +58,14 @@ public class MainActivity extends AppCompatActivity{
     protected void setUpClickies(){
         bleAdvertButton.setOnClickListener(v -> gattService.StartAdvertisement());
         testButton.setOnClickListener(v -> gattService.StartInput(bondState.getText().toString()));
-        disconnectButton.setOnClickListener(v -> gattService.Disconnect());
+        disconnectButton.setOnClickListener(v -> {
+        if(satTest!=null){
+            satTest.purge();
+            satTest = null;
+            stest = null;
+        }
+        gattService.Disconnect();
+        });
         buildButton.setOnClickListener(v->gattService.BuildPipe());
     }
     protected void UpdateViewFromGattState(){
@@ -80,6 +89,8 @@ public class MainActivity extends AppCompatActivity{
         disconnectButton.setEnabled(dc);
         buildButton.setEnabled(hidbuild);
 
+        Log.w("UI",String.format("Message Received with: %s %s %s",state.name,state.address,state.bondstate));
+
         sconnHost = statusLvl>= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()?state.name:"DISCONNECTED";
         sbondState = statusLvl>= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()?state.address:state.status.toString();
         sbondables = statusLvl> GattServiceState.SERVICE_STATUS.IDLE_NODATA.ordinal()?bondList.getText().toString():"BT Manager Not Init";
@@ -88,8 +99,15 @@ public class MainActivity extends AppCompatActivity{
         bondState.setText(sbondState);
         bondList.setText(sbondables);
 
-    }
 
+        if(statusLvl==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal() && satTest ==null){
+            satTest = new Timer();
+            stest = new saturationTest();
+            satTest.scheduleAtFixedRate(stest.runTest(gattService.GetPipe(),1, 0.75,15,1000),1000,15);
+        }
+    }
+    private Timer satTest;
+    private saturationTest stest;
     @Override
     protected void onStart() {
         super.onStart();
@@ -180,6 +198,7 @@ public class MainActivity extends AppCompatActivity{
             PlayEmGATTService.mBinder binderLink = (PlayEmGATTService.mBinder) service;
             gattService = binderLink.getService();
             isBound = true;
+            Log.i("DEBUG","MainActivity onServiceConnected " + Thread.currentThread().getName());
             gattService.DeferredConstructor(MainActivity.this);
             gattService.SubscribeToEventBus(MainActivity.this,gattServiceCallbacks);
             UpdateViewFromGattState();
