@@ -7,8 +7,8 @@ class ControllerEmulatorLoop extends Thread{
     private static final double MaxUps = 100;
     private static final double TargetUpsPeriod = 1E+3/MaxUps;
     private boolean isRunning = false;
-    private SurfaceHolder surfaceHolder;
-    private ControllerEmulator controllerEmulator;
+    private final SurfaceHolder surfaceHolder;
+    private final ControllerEmulator controllerEmulator;
     private double averageUPS;
 
 

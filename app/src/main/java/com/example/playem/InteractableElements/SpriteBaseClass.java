@@ -13,7 +13,6 @@ public abstract class SpriteBaseClass {
 
     //add in bitmap for sprite image later
 
-    public SpriteBaseClass(){}
     public SpriteBaseClass(double CentreX, double CentreY, boolean ShouldRedraw) {
         // (X, Y) coordinate of sprite
         this.CentreX = CentreX;

@@ -1,6 +1,5 @@
 package com.example.playem.InteractableElements;
 
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -9,9 +8,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import androidx.fragment.app.Fragment;
-
-public class ThumbStick2 extends View {
+public class ThumbStick2_archived extends View {
 
     private static final int OUTER_CIRCLE_COLOR = Color.GRAY;
     private static final int INNER_CIRCLE_COLOR = Color.LTGRAY;
@@ -30,17 +27,17 @@ public class ThumbStick2 extends View {
 
     private boolean isPressed = false;
 
-    public ThumbStick2(Context context) {
+    public ThumbStick2_archived(Context context) {
         super(context);
         init();
     }
 
-    public ThumbStick2(Context context, AttributeSet attrs) {
+    public ThumbStick2_archived(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public ThumbStick2(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ThumbStick2_archived(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }

@@ -12,17 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.example.playem.InteractableElements.*;
-//import com.example.playem.InteractableElements.ThumbStick;
 import com.example.playem.R;
 
 
 // ControllerEmulator manages all objects inside of the Controller Emulator state
 // Responsible for updating states and rendering all objects on screen
 public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Callback {
-//    // Single ThumbStick for testing
-//    private final ThumbStick thumbStick;
-//    //Single Button for testing
-//    private final ControllerButton button;
     private final ControllerEmulatorLoop CELoop;
     private final ElementHandler elementHandler;
 
@@ -44,71 +39,42 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         ElementLoader elementLoader = new ElementLoader();
 
         /// TESTING ///
-        ThumbStick thumbStick = new ThumbStick(275, 350, 50, 70);
-        ThumbStick thumbStick2 = new ThumbStick(275, 900, 60, 100);
-        ControllerButton button = new ControllerButton(275, 500, 50);
-        ControllerButton button2 = new ControllerButton(400, 500, 100);
-        ControllerButton button3 = new ControllerButton(600, 500, 60);
+        ThumbStick thumbStick = new ThumbStick(1,275, 350, 50, 70);
+        ThumbStick thumbStick2 = new ThumbStick(2,275, 900, 60, 100);
+        ControllerButton button = new ControllerButton(3,275, 500, 50);
+        ControllerButton button2 = new ControllerButton(4,400, 500, 100);
+        ControllerButton button3 = new ControllerButton(5,600, 500, 60);
         ControllerElement[] ELEMENTS = {thumbStick, thumbStick2, button, button2, button3};
+        elementLoader.loadELEMENTS(ELEMENTS);
         /// TESTING ///
 
-        elementLoader.loadELEMENTS(ELEMENTS);
+
         elementHandler = new ElementHandler(elementLoader.GetPositionHashMap(), ELEMENTS);
 
         //set focus to true
         setFocusable(true);
     }
 
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        int action = event.getActionMasked();
-////        int pointerIndex = event.getActionIndex();
-////        int pointerID = event.getPointerId(pointerIndex);
-//
-//        switch (action) {
-//            case MotionEvent.ACTION_POINTER_DOWN:
-//            case MotionEvent.ACTION_DOWN:
-////                thumbStick.handleActionDown((double) event.getX(), (double) event.getY(), pointerID); // for testing
-////                button.handleActionDown((double) event.getX(), (double) event.getY(), pointerID); // for testing
-//                // run ElementHandler.handleTouchStart(...)
-//                elementHandler.handleTouchStart(event);
-//                return true;
-//
-//            case MotionEvent.ACTION_MOVE:
-////                thumbStick.handleActionMove((double) event.getX(), (double) event.getY(), pointerID); // for testing
-//                // run ElementHandler.handleTouchMove(...)
-//                elementHandler.handleTouchMove(event);
-//                return true;
-//
-//            case MotionEvent.ACTION_POINTER_UP:
-//            case MotionEvent.ACTION_UP:
-////                thumbStick.handleActionUp(pointerID); // for testing
-////                button.handleActionUp(pointerID); // for testing
-//                //run ElementHandler.handleTouchUp(...)
-//                elementHandler.handleTouchEnd(event);
-//                return true;
-//
-//        } return super.onTouchEvent(event);
-//    }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getActionMasked();
 
         switch (action) {
-            case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
                 elementHandler.handleTouchStart(event);
                 return true;
             case MotionEvent.ACTION_MOVE:
                 elementHandler.handleTouchMove(event);
                 return true;
-            case MotionEvent.ACTION_POINTER_UP:
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
                 elementHandler.handleTouchEnd(event);
                 return true;
 
-        } return super.onTouchEvent(event);
+        }
+        // pass elementHandler.getOutputs() to bluetooth stuff
+        return super.onTouchEvent(event);
     }
 
     @Override
@@ -130,9 +96,14 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
+        //Draw Buttons, Joysticks and ThumbSticks
+        // call ElementHandler.draw()
+        elementHandler.draw(canvas);
+
         /// TESTING ///
-//        thumbStick.draw(canvas); // for testing
-//        button.draw(canvas); // for testing
+        //thumbStick.draw(canvas); // for testing
+        //button.draw(canvas); // for testing
+        /// TESTING ///
 
         // Draw update text on screen
         drawUPS(canvas);
@@ -146,9 +117,6 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
                 100, 100, paint);
         /// TESTING ///
 
-        //Draw Buttons, Joysticks and ThumbSticks
-        // call ElementHandler.draw()
-        elementHandler.draw(canvas);
     }
 
     // for testing update speed with multiple elements rendered on screen
@@ -162,7 +130,6 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void update() {
-//        thumbStick.update();
         // call ElementHandler.update()
         elementHandler.update();
     }
