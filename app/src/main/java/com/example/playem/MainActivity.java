@@ -23,21 +23,14 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity{
-    /*private ExecutorService BLEManagerExecutorPool;
-    PlayEmBTManager mBTManager;
-    private double a = 0;
-    private boolean aswing = true;
-    private int b = 0;
-    private boolean testB = true;
-    public PlayEmDataPipe dataPipe;
-    private Timer genericTimer = new Timer("Report Test");
-    private boolean gTimerActive = false;*/
     PlayEmGATTService gattService;
     boolean isBound = false;
-    Button bleAdvertButton,testButton,disconnectButton,buildButton;
+    Button bleAdvertButton,testButton,disconnectButton;
+    Button buildButton, controlViewButton;
     TextView hostName,bondState,bondList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //TODO: Move this to after surface view is started
@@ -46,6 +39,7 @@ public class MainActivity extends AppCompatActivity{
         testButton = findViewById(R.id.bTest);
         disconnectButton = findViewById(R.id.bDisconnect);
         buildButton = findViewById(R.id.bBuild);
+        controlViewButton = findViewById(R.id.bControls);
 
         hostName = findViewById(R.id.tHostName);
         bondState = findViewById(R.id.tBond);
@@ -59,14 +53,18 @@ public class MainActivity extends AppCompatActivity{
         bleAdvertButton.setOnClickListener(v -> gattService.StartAdvertisement());
         testButton.setOnClickListener(v -> gattService.StartInput(bondState.getText().toString()));
         disconnectButton.setOnClickListener(v -> {
-        if(satTest!=null){
-            satTest.purge();
-            satTest = null;
-            stest = null;
-        }
-        gattService.Disconnect();
+            if(satTest!=null){
+                satTest.purge();
+                satTest = null;
+                stest = null;
+            }
+            gattService.Disconnect();
         });
         buildButton.setOnClickListener(v->gattService.BuildPipe());
+        controlViewButton.setOnClickListener(v->{
+            Intent goControlsView = new Intent(getApplicationContext(), ControllerReactiveActivity.class);
+            startActivity(goControlsView);
+        });
     }
     protected void UpdateViewFromGattState(){
         if(isBound){
@@ -88,6 +86,7 @@ public class MainActivity extends AppCompatActivity{
         testButton.setEnabled(test);
         disconnectButton.setEnabled(dc);
         buildButton.setEnabled(hidbuild);
+        controlViewButton.setEnabled(false);
 
         Log.w("UI",String.format("Message Received with: %s %s %s",state.name,state.address,state.bondstate));
 
@@ -98,7 +97,6 @@ public class MainActivity extends AppCompatActivity{
         hostName.setText(sconnHost);
         bondState.setText(sbondState);
         bondList.setText(sbondables);
-
 
         if(statusLvl==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal() && satTest ==null){
             satTest = new Timer();

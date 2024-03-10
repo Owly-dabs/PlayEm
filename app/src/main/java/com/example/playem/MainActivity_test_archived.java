@@ -4,8 +4,9 @@ import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.playem.ControllerEmulatorSurfaceView.ControllerEmulator;
-import com.example.playem.InteractableElements.ThumbStick2;
+
+import com.example.playem.InteractableElements.ThumbStick2_archived;
+import com.example.playem.R;
 
 public class MainActivity_test_archived extends AppCompatActivity {
 
@@ -17,7 +18,7 @@ public class MainActivity_test_archived extends AppCompatActivity {
         setContentView(R.layout.activity_thumbstick);
 
         // Find the ThumbStick2 view in the layout
-        ThumbStick2 thumbStick1 = findViewById(R.id.thumbStick2);
+        //ThumbStick2_archived thumbStick1 = findViewById(R.id.thumbStick2);
 
     }
 }
