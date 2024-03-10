@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -24,11 +25,9 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
 
     public ControllerEmulator(Context context) {
         super(context);
-
         //get Surface Holder and callback
         SurfaceHolder surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
-
         //instantiate ControllerEmulatorLoop
         CELoop = new ControllerEmulatorLoop(this, surfaceHolder);
 
@@ -54,9 +53,13 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         //set focus to true
         setFocusable(true);
     }
-
+    private long reftime=0;
+    private long lasttime = 0;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        long time= System.currentTimeMillis();
+        reftime = time-lasttime;
+        lasttime = time;
         int action = event.getActionMasked();
 
         switch (action) {
@@ -89,25 +92,26 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-
+        synchronized (CELoop){
+            this.CELoop.Stop();
+            try {
+                CELoop.wait(1000);
+                holder.removeCallback(this);
+            }catch (Exception e){
+                Log.e("THREAD",e.toString());
+            }
+        }
     }
 
     @Override
     public void draw(Canvas canvas) {
+        if(canvas==null)
+            return;
         super.draw(canvas);
-
         //Draw Buttons, Joysticks and ThumbSticks
-        // call ElementHandler.draw()
         elementHandler.draw(canvas);
 
-        /// TESTING ///
-        //thumbStick.draw(canvas); // for testing
-        //button.draw(canvas); // for testing
-        /// TESTING ///
-
         // Draw update text on screen
-        drawUPS(canvas);
-
         Paint paint = new Paint();
         int colour = ContextCompat.getColor(this.getContext(), R.color.white);
         paint.setColor(colour);
@@ -115,18 +119,18 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         canvas.drawText("Dimensions: " + Resources.getSystem().getDisplayMetrics().widthPixels +
                         "x" + Resources.getSystem().getDisplayMetrics().heightPixels,
                 100, 100, paint);
-        /// TESTING ///
+        drawUPS(canvas);
 
     }
 
     // for testing update speed with multiple elements rendered on screen
     public void drawUPS(Canvas canvas) {
-        String averageUPS = Double.toString(CELoop.getAverageUPS());
+        String averageUPS = Long.toString(reftime);
         Paint paint = new Paint();
         int colour = ContextCompat.getColor(this.getContext(), R.color.white);
         paint.setColor(colour);
         paint.setTextSize(50);
-        canvas.drawText("UPS: " + averageUPS, 100, 200, paint);
+        canvas.drawText("UPS: " + averageUPS, 100, 150, paint);
     }
 
     public void update() {
