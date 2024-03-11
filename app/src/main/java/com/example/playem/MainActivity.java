@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
+import com.example.playem.hid.HIDProfileBuilder;
 import com.example.playem.testutils.saturationTest;
 import com.example.playem.viewmodels.GattServiceState;
 
@@ -60,7 +61,7 @@ public class MainActivity extends AppCompatActivity{
             }
             gattService.Disconnect();
         });
-        buildButton.setOnClickListener(v->gattService.BuildPipe());
+        buildButton.setOnClickListener(v->gattService.BuildPipe(new HIDProfileBuilder()));
         controlViewButton.setOnClickListener(v->{
             Intent goControlsView = new Intent(getApplicationContext(), ControllerReactiveActivity.class);
             startActivity(goControlsView);
@@ -76,12 +77,10 @@ public class MainActivity extends AppCompatActivity{
         int statusLvl = state.status.ordinal();
         boolean dc,test,advert,hidbuild;
         String sconnHost,sbondState,sbondables;
-
         dc = statusLvl >= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal();
         test = statusLvl == GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal();
         advert = statusLvl == GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST.ordinal();
         hidbuild = statusLvl == GattServiceState.SERVICE_STATUS.IDLE_NODATA.ordinal();
-
         bleAdvertButton.setEnabled(advert);
         testButton.setEnabled(test);
         disconnectButton.setEnabled(dc);

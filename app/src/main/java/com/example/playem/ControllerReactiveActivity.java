@@ -37,12 +37,10 @@ import com.example.playem.viewmodels.GattServiceState;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ControllerReactiveActivity extends AppCompatActivity {
-
     private WindowInsetsControllerCompat windowInsetsControllerCompat;
     private ControllerReactiveView controlView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         EdgeToEdge.enable(this);
         windowInsetsControllerCompat =
                 WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
@@ -75,8 +73,6 @@ public class ControllerReactiveActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-
-
     private final GattServiceCallbacks gattServiceCallbacks = new GattServiceCallbacks() { //TODO make a factory class
         @Override
         public Runnable onServiceStatusChanged (GattServiceState newState) {
@@ -102,6 +98,7 @@ public class ControllerReactiveActivity extends AppCompatActivity {
             Log.i("DEBUG","MainActivity onServiceConnected " + Thread.currentThread().getName());
             gattService.DeferredConstructor(ControllerReactiveActivity.this);
             gattService.SubscribeToEventBus(ControllerReactiveActivity.this,gattServiceCallbacks);
+            controlView.SetPipe(gattService.GetPipe());
             UpdateViewFromGattState();
         }
         @Override

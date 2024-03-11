@@ -3,18 +3,16 @@ package com.example.playem.ControllerEmulatorSurfaceView.VirtualControls;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.view.MotionEvent;
-
-import androidx.annotation.NonNull;
 
 import com.example.playem.ControllerEmulatorSurfaceView.ControlComponent;
 import com.example.playem.ControllerEmulatorSurfaceView.ControlHandler;
+import com.example.playem.hid.interfaces.ChunkType;
 
 public class ThumbStick extends ControlComponent implements ControlHandler {
 
-    public ThumbStick(int idxX, int idxY, int pixelsPerStep) {
-        super(idxX, idxY,pixelsPerStep);
+    public ThumbStick(int idxX, int idxY, int pixelsPerStep, int pipeid) {
+        super(idxX, idxY,pixelsPerStep,pipeid);
         this.widthSteps=5;
         this.heightSteps=5;
         this.basePobj = new Paint();
@@ -32,7 +30,7 @@ public class ThumbStick extends ControlComponent implements ControlHandler {
     private Paint basePobj;
     private Paint pointyPobj;
     @Override
-    public void Draw(Canvas canvas, Paint bgPaintObject) {
+    public synchronized void Draw(Canvas canvas, Paint bgPaintObject) {
         float drawLength = this.widthSteps*this.pixelsPerStep;
         float x =  this.lastValuePack[0].relPixelX;
         float y =  this.lastValuePack[0].relPixelY;
@@ -45,11 +43,26 @@ public class ThumbStick extends ControlComponent implements ControlHandler {
     }
 
     private ValuePack[] lastValuePack;
-
     @Override
     public ValuePack[] onEnter(float x, float y, int pointerId) {
         if(lastValuePack==null)
             lastValuePack = new ValuePack[1];
+        return onMove(x,y,pointerId);
+    }
+
+    @Override
+    public ValuePack[] onExit(float x, float y, int pointerId) {
+        lastValuePack[0].relPixelY = 0;
+        lastValuePack[0].relPixelX = 0;
+        lastValuePack[0].x = (int)x;
+        lastValuePack[0].y = (int)y;
+
+        return lastValuePack;
+    }
+
+    @Override
+    public ValuePack[] onMove(float x, float y, int pointerId) {
+        lastValuePack[0].type = ChunkType.AXES2;
         float maxlen = widthSteps*pixelsPerStep;
         lastValuePack[0].x = (int)x;
         lastValuePack[0].y = (int)y;
@@ -62,21 +75,9 @@ public class ThumbStick extends ControlComponent implements ControlHandler {
 
         lastValuePack[0].relPixelX = (int)((relX/maxlen)*65535);
         lastValuePack[0].relPixelY = (int)((relY/maxlen)*65535);
-
-        return new ValuePack[0];
+        return lastValuePack;
     }
-
-    @Override
-    public ValuePack[] onExit(float x, float y, int pointerId) {
-        return new ValuePack[0];
-    }
-
-    @Override
-    public ValuePack[] onMove(float x, float y, int pointerId) {
-        return new ValuePack[0];
-    }
-
-    @Override
+    @Override //TODO remove and make as default function (optional override)
     public ValuePack[] onMotionEvent(MotionEvent motionEvent) {
         return new ValuePack[0];
     }

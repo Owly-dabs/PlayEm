@@ -3,6 +3,8 @@ package com.example.playem.ControllerEmulatorSurfaceView;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.DisplayCutout;
@@ -12,11 +14,19 @@ import android.view.WindowMetrics;
 
 import androidx.constraintlayout.widget.ConstraintSet;
 
+import com.example.playem.PlayEmGATTService;
 import com.example.playem.generics.ConcurrentListBackHashMap;
+import com.example.playem.pipes.PlayEmDataPipe;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
+
+import kotlin.jvm.functions.Function2;
 
 public class ControlGrid {
     public static final int ORIENTATION_POTRAIT=0;
@@ -61,17 +71,45 @@ public class ControlGrid {
         Log.e("GRID",String.format("%f %f %f %f",cutoutTop,cutoutRight,cutoutBottom,cutoutLeft));
         Log.e("GRID",String.format("%f %f",screenActualWidth,screenActualHeight));
         Log.e("GRID",String.format("%f %f",gridWidth,gridHeight));
-
+        drawCalls = new ConcurrentLinkedQueue<>();
         grid = new ControlComponent[(int)gridWidth][(int)gridHeight];
         //gridHeight = scr
     }
     private final ConcurrentListBackHashMap<Integer,ControlComponent> ActivePointers = new ConcurrentListBackHashMap<>();
-
+    private final ConcurrentLinkedQueue<ControlComponent> drawCalls;
+    private PlayEmDataPipe dataPipe;
     private ControlComponent getControlHandler(float x, float y){
         int arrXidx = (int)(x/gridPixelWidth*gridWidth)-1;
         int arrYidx = (int)(y/gridPixelLength*gridHeight)-1;
         //Log.w("CTLGRID",String.format("%d x %d y",arrXidx,arrYidx));
         return grid[arrXidx][arrYidx];
+    }
+    public Queue<ControlComponent> GetDrawCalls(){
+        return drawCalls;
+    }
+    public void SetPipe(PlayEmDataPipe dataPipe){
+        dataPipe = dataPipe;
+    }
+
+    private boolean pipeFramePush = false;
+
+    private void handlePack(ControlHandler.ValuePack[] pack){
+        pipeFramePush = true;
+        switch(pack[0].type){
+            case AXES:
+                dataPipe.UpdateAxis(pack[0].id,pack[0].x);
+                break;
+            case AXES2:
+                dataPipe.UpdateAxis(pack[0].id,pack[0].x);
+                dataPipe.UpdateAxis(pack[0].id+1,pack[0].y);
+                break;
+            case BUTTONS:
+                dataPipe.UpdateButtonNumber(pack[0].id,pack[0].x>0);
+                break;
+            default:
+                pipeFramePush = false||pipeFramePush;
+                break;
+        }
     }
 
     public void newPointer(MotionEvent event,int id,int idx){
@@ -83,21 +121,22 @@ public class ControlGrid {
         ControlComponent ch = getControlHandler(x,y);
         if(ch!=null) {
             ActivePointers.AddorUpdate(id, ch);
-            ch.handler.onEnter(x,y,id);
+            handlePack(ch.handler.onEnter(x,y,id));
+            drawCalls.add(ch);
         }
     }
 
     private void movePointer(MotionEvent event,int id ,int idx){
         float x = event.getX(idx);
         float y = event.getY(idx);
-        Objects.requireNonNull(ActivePointers.Get(id)).handler.onMove(x,y,id);
+        handlePack(Objects.requireNonNull(ActivePointers.Get(id)).handler.onMove(x,y,id));
     }
 
     private void dropPointer(MotionEvent event,int id, int idx){
         float x = event.getX(idx);
         float y = event.getY(idx);
         if(ActivePointers.ContainsKey(id)){
-            Objects.requireNonNull(ActivePointers.Get(id)).handler.onExit(x,y,id);
+         handlePack(Objects.requireNonNull(ActivePointers.Get(id)).handler.onExit(x,y,id));
         }
     }
     public boolean onTouchEvent(MotionEvent event) {
@@ -131,7 +170,12 @@ public class ControlGrid {
             case MotionEvent.ACTION_CANCEL:
                 Log.w("CONTROL","CANCEL received, Unsupported input handling");
         }
-        return false;
+        if(pipeFramePush){
+            dataPipe.PushFrame();
+            dataPipe.NotifyDataReady();
+        }
+        pipeFramePush = false;
+        return true;
     }
 
     public boolean AddControlComponent(ControlComponent component){

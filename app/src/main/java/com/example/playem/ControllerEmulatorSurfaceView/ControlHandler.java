@@ -11,6 +11,7 @@ public interface ControlHandler {
         public int y;
         public float relPixelX;
         public float relPixelY;
+        public int id;
     }
     ValuePack[] onEnter(float x, float y, int pointerId);
     ValuePack[] onExit(float x, float y, int pointerId);

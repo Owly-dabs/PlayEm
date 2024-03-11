@@ -4,16 +4,16 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
-import androidx.annotation.NonNull;
-
 public abstract class ControlComponent {
-    public ControlComponent(int idxX, int idxY,int pixelsPerStep){
-        //this.handler = handler;
+    public ControlComponent(int idxX, int idxY,int pixelsPerStep,int pipeId){
         positionX = idxX;
         positionY = idxY;
         this.pixelsPerStep = pixelsPerStep;
+        pipeID = pipeId;
+        MoveCentre();
         updateDrawSpace();
     }
+    private final int pipeID;
     protected ControlHandler handler;
     protected Rect drawSpace;
     public int positionX,positionY;

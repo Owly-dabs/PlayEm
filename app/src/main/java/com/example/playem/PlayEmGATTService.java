@@ -91,11 +91,10 @@ public class PlayEmGATTService extends Service{
     private Activity focusedActivity;
     private HashMap<Integer, HIDChunk> dataChunks;
     private BroadcastReceiver bondStateReceiver;
-
-    protected void BuildPipe(){
+    protected void BuildPipe(HIDProfileBuilder builder){
         if(_constructed){
             executorPool.execute(()->{
-                HIDProfileBuilder builder = new HIDProfileBuilder();
+                //HIDProfileBuilder builder = new HIDProfileBuilder();
                 builder.Build();
                 dataPipe = new PlayEmDataPipe(builder.GetChunks());
                 dataChunks = builder.GetChunks();

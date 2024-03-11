@@ -41,7 +41,7 @@ public class PlayEmDataPipe {
             }else{
                 bArray[byteIndex] = (byte) ~((~bArray[byteIndex])|1<<bNo);
             }
-            signalDirty = true;
+            //signalDirty = true;
             //Log.i("PIPE",String.format("Update Button called %d %8s",bNo,Integer.toBinaryString(CurrentTruth.get(0)[byteIndex]).replace(" ","0")));
         }
     }
@@ -58,11 +58,11 @@ public class PlayEmDataPipe {
             byte[] aArray = CurrentTruth.get(0);
             aArray[aNo*2+axesData.bIndex] = (byte)(value); //LSB first
             aArray[aNo*2+axesData.bIndex+1] = (byte)(value>>8);
-            signalDirty = true;
+            //signalDirty = true;
         }
     }
 
-    public void PushFrame(){    //Reserved for output report
+    public void PushFrame(){
             byte[] newFrame = new byte[tsize];
             System.arraycopy(CurrentTruth.get(0),0,newFrame,0,tsize);
             dataPipeRef.enqueue(newFrame);
@@ -73,6 +73,9 @@ public class PlayEmDataPipe {
             //newFrame[0] = 1;
             System.arraycopy(CurrentTruth.get(0),0,newFrame,0,tsize);
             return newFrame;
+    }
+    public void NotifyDataReady(){
+        signalDirty = true;
     }
 
     public void NotifyComplete(){

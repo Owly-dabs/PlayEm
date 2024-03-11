@@ -3,10 +3,7 @@ package com.example.playem.ControllerEmulatorSurfaceView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorSpace;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -14,80 +11,62 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
-import com.example.playem.R;
+import com.example.playem.PlayEmGATTService;
+import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.viewmodels.GattServiceState;
 
-import java.util.Collection;
-import java.util.concurrent.Executor;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ControllerReactiveView extends SurfaceView {
 
     private ControlGrid controlGrid;
-    private final Canvas persistantCanvas;
-    private ExecutorService executorPool;
-    private float x=100,y=100f;
+    private ExecutorService inputThread;
+    private ExecutorService drawThread;
     public ControllerReactiveView(Context context, ControlGrid controlGrid) {
         super(context);
         this.getHolder().addCallback(this.surfaceViewCallback);
         this.controlGrid = controlGrid;
-        persistantCanvas = new Canvas();
-        oldRect.top = 50;
-        oldRect.bottom = 150;
-        oldRect.left = 50;
-        oldRect.right = 150;
-        textRect.top = 0;
-        textRect.bottom = 51;
-        textRect.left = 0;
-        textRect.right = 150;
-        executorPool = Executors.newSingleThreadExecutor();
+        inputThread = Executors.newSingleThreadExecutor();
+        drawThread = Executors.newSingleThreadExecutor();
     }
-    private Rect oldRect = new Rect();
-    private Rect newRect = new Rect();
-    private Rect textRect = new Rect();
-    private Paint defPaint = new Paint();
 
+    public void SetPipe(@NonNull PlayEmDataPipe pipe){
+        if(controlGrid!=null)
+            controlGrid.SetPipe(pipe);
+        else
+            Log.e("CTRLVIEW","Tried to set pipe when control grid is null");
+    }
+
+    private Paint defPaint = new Paint();
     private SurfaceHolder surfaceHolder;
     private int touchCount = 0;
     private long lasttime=0;
     @SuppressLint("DefaultLocale")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        touchCount++;
+        inputThread.execute(()->controlGrid.onTouchEvent(event));
+        drawThread.execute(this::drawFromComponent);
+        return true;
+    }
+    private void drawFromComponent(){
         long time = System.currentTimeMillis();
-        executorPool.execute(()->controlGrid.onTouchEvent(event));
-            x+=100;
-            if(x>1000){
-                y+=100;
-                x=100;
-            }
-            if(y>2000)
-                y=100;
-
-        //touchCount++;
-        newRect = new Rect();
-        newRect.bottom = (int) y+50;
-        newRect.top = (int) y-50;
-        newRect.right = (int) x+50;
-        newRect.left = (int) x-50;
-
-
         Canvas screenC = surfaceHolder.lockHardwareCanvas();
-        if(screenC==null)
-            Log.e("CANVAS","Canvas is NULL!");
-        defPaint = new Paint();
-        defPaint.setColor(Color.WHITE);
-        Paint bg = new Paint();
-        screenC.drawRect(newRect,bg);
-        screenC.drawRect(oldRect,bg);
-        screenC.drawCircle(x,y,50,defPaint);
-        screenC.drawRect(textRect,bg);
-        screenC.drawText(String.format("%d ms",time-lasttime),50,50,defPaint);
-        oldRect = newRect;
+        int maxdraw = 10;
+        Queue<ControlComponent> toDraw = controlGrid.GetDrawCalls();
+        while(maxdraw>=0){
+            maxdraw--;
+            ControlComponent ch = toDraw.poll();
+            if(ch!=null)
+                ch.Draw(screenC,defPaint);
+            else
+                break;
+        }
+        //screenC.drawText(String.format("%d ms",time-lasttime),50,50,defPaint);
         lasttime = time;
         surfaceHolder.unlockCanvasAndPost(screenC);
-
-        // pass elementHandler.getOutputs() to bluetooth stuff
-        return true;
     }
     private SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
         @Override
