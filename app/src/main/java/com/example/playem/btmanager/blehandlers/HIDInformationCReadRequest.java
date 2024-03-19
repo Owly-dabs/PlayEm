@@ -10,7 +10,7 @@ import com.example.playem.btmanager.blehandlers.interfaces.GattResponse;
 import com.example.playem.btmanager.blehandlers.interfaces.BLECharacteristicsReadRequest;
 
 public class HIDInformationCReadRequest implements BLECharacteristicsReadRequest {
-    final byte[] HIDINFO = {0x11,0x01,0x00,0x01}; //LSB b1-b2 1.11 || localization cc || Normally Connected && See pg 77 HID11
+    final byte[] HIDINFO = {0x11,0x01,0x00,0x03}; //LSB b1-b2 1.11 || localization cc || Normally Connected && See pg 77 HID11 + HIDS_SPEC
     @Override
     public Runnable onCharacteristicReadRequest(BluetoothGattServer gattServer, BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, int offset) {
         return new Runnable() {

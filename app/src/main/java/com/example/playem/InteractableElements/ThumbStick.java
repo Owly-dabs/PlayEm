@@ -4,8 +4,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 
+
 // Not used will be removed later
-public class ThumbStick extends SpriteBaseClass implements GestureElement{
+public class ThumbStick extends ControllerElement{
 
     private final Paint InnerCirclePaint;
     private final Paint OuterCirclePaint;
@@ -13,20 +14,21 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
     private double InnerCirclePosY;
     private final double OuterCircleRadius;
     private final double InnerCircleRadius;
-    private boolean IsPressed;
+    private boolean IsPressed = false;
     private double actuatorX;
     private double actuatorY;
+    private int pointerID = -1;
 
-    //Constructor
-    public ThumbStick(double CentreX, double CentreY,
+    // Constructor
+    public ThumbStick(int elementID, double CentreX, double CentreY,
                       double InnerCircleRadius, double OuterCircleRadius) {
-        super(CentreX, CentreY, true);
-
+        super(elementID, CentreX, CentreY, true);
 
         // Defining Inner and Outer circle radii and positions
         this.InnerCirclePosX = CentreX;
         this.InnerCirclePosY = CentreY;
-        this.OuterCircleRadius = OuterCircleRadius;
+        super.radius = this.OuterCircleRadius = OuterCircleRadius;
+
         this.InnerCircleRadius = InnerCircleRadius;
 
         // Colour of ThumbSticks (temporary solution for now)
@@ -39,16 +41,12 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
         this.InnerCirclePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
     }
+
     @Override
     public boolean isPressed(double touchX, double touchY) {
         return distanceToCentreSquared(touchX, touchY) < Math.pow(OuterCircleRadius, 2);
     }
-//    public void setIsPressed(boolean IsPressed) {
-//        this.IsPressed = IsPressed;
-//    }
-//    public boolean getIsPressed() {
-//        return this.IsPressed;
-//    }
+
     public void setActuator(double touchX, double touchY) {
         double dX = touchX - CentreX;
         double dY = touchY - CentreY;
@@ -74,25 +72,30 @@ public class ThumbStick extends SpriteBaseClass implements GestureElement{
         InnerCirclePosY = (int) CentreY + actuatorY*OuterCircleRadius*0.6;
     }
     @Override
-    public void handleActionDown(double touchX, double touchY) {
+    public int[] handleActionDown(double touchX, double touchY, int pointerID) {
         if (isPressed(touchX, touchY)) {
             this.IsPressed = true;
+            this.pointerID = pointerID;
+            return new int[]{1};
             // add in or return any needed information from thumbStick press
             // IsPressed is the state of the button
-        }
+        } return null;
     }
     @Override
-    public void handleActionMove(double touchX, double touchY) {
-        if (IsPressed) {
+    public int[] handleActionMove(double touchX, double touchY, int pointerID) {
+        if (IsPressed && (this.pointerID == pointerID)) {
             setActuator(touchX, touchY);
+            return new int[]{(int) (actuatorX*OuterCircleRadius), (int) (actuatorY *OuterCircleRadius)};
             // add in or return any needed information from thumbStick move here
             // actuatorX and actuatorY are normalised values from within the thumbStick
-        }
+        } return null;
     }
     @Override
-    public void handleActionUp() {
+    public int[] handleActionUp(int pointerID) {
+        this.pointerID = -1;
         IsPressed = false;
         resetActuator();
+        return null;
     }
     @Override
     public void draw(Canvas canvas){

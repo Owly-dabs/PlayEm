@@ -2,7 +2,7 @@ package com.example.playem.pipes;
 
 import android.util.Log;
 
-import com.example.playem.btmanager.blehandlers.interfaces.ConcurrentTransferQueue;
+import com.example.playem.btmanager.blehandlers.interfaces.ConcurrentTransferBuffer;
 import com.example.playem.hid.interfaces.ChunkType;
 import com.example.playem.hid.interfaces.HIDChunk;
 
@@ -47,8 +47,8 @@ public class PlayEmDataPipe {
     }
 
     //Axes No are 0 indexed
-    public void UpdateAxis(int aNo, int value, boolean isNeg){
-        value = isNeg? (value + 0x0FFFF): value;
+    public void UpdateAxis(int aNo, int value){
+        //value = value<0? (value + 0x0FFFF): value; take raw
         synchronized (this) {
             HIDChunk axesData = AxesData.get(0);
             if (aNo >= axesData.size / 2) {
@@ -63,20 +63,19 @@ public class PlayEmDataPipe {
     }
 
     public void PushFrame(){
-        synchronized (this) {
             byte[] newFrame = new byte[tsize];
             System.arraycopy(CurrentTruth.get(0),0,newFrame,0,tsize);
             dataPipeRef.enqueue(newFrame);
-        }
     }
     public byte[] GetReport(){
         //Log.i("PIPE","GetReport Called");
-        synchronized (this){
             byte[] newFrame = new byte[tsize];//+1];
             //newFrame[0] = 1;
             System.arraycopy(CurrentTruth.get(0),0,newFrame,0,tsize);
             return newFrame;
-        }
+    }
+    public void NotifyDataReady(){
+        signalDirty = true;
     }
 
     public void NotifyComplete(){
@@ -90,5 +89,5 @@ public class PlayEmDataPipe {
     final List<byte[]> CurrentTruth = new ArrayList<>();
     final List<HIDChunk> ButtonsData = new ArrayList<>();
     final List<HIDChunk> AxesData = new ArrayList<>();
-    public final ConcurrentTransferQueue dataPipeRef = new ConcurrentTransferQueue();
+    public final ConcurrentTransferBuffer dataPipeRef = new ConcurrentTransferBuffer();
 }

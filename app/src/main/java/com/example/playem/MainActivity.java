@@ -16,26 +16,22 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
+import com.example.playem.hid.HIDProfileBuilder;
+import com.example.playem.testutils.saturationTest;
 import com.example.playem.viewmodels.GattServiceState;
 
+import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity{
-    /*private ExecutorService BLEManagerExecutorPool;
-    PlayEmBTManager mBTManager;
-    private double a = 0;
-    private boolean aswing = true;
-    private int b = 0;
-    private boolean testB = true;
-    public PlayEmDataPipe dataPipe;
-    private Timer genericTimer = new Timer("Report Test");
-    private boolean gTimerActive = false;*/
     PlayEmGATTService gattService;
     boolean isBound = false;
-    Button bleAdvertButton,testButton,disconnectButton,buildButton;
+    Button bleAdvertButton,testButton,disconnectButton;
+    Button buildButton, controlViewButton;
     TextView hostName,bondState,bondList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //TODO: Move this to after surface view is started
@@ -44,6 +40,7 @@ public class MainActivity extends AppCompatActivity{
         testButton = findViewById(R.id.bTest);
         disconnectButton = findViewById(R.id.bDisconnect);
         buildButton = findViewById(R.id.bBuild);
+        controlViewButton = findViewById(R.id.bControls);
 
         hostName = findViewById(R.id.tHostName);
         bondState = findViewById(R.id.tBond);
@@ -56,8 +53,19 @@ public class MainActivity extends AppCompatActivity{
     protected void setUpClickies(){
         bleAdvertButton.setOnClickListener(v -> gattService.StartAdvertisement());
         testButton.setOnClickListener(v -> gattService.StartInput(bondState.getText().toString()));
-        disconnectButton.setOnClickListener(v -> gattService.Disconnect());
-        buildButton.setOnClickListener(v->gattService.BuildPipe());
+        disconnectButton.setOnClickListener(v -> {
+            if(satTest!=null){
+                satTest.purge();
+                satTest = null;
+                stest = null;
+            }
+            gattService.Disconnect();
+        });
+        buildButton.setOnClickListener(v->gattService.BuildPipe(new HIDProfileBuilder()));
+        controlViewButton.setOnClickListener(v->{
+            Intent goControlsView = new Intent(getApplicationContext(), ControllerReactiveActivity.class);
+            startActivity(goControlsView);
+        });
     }
     protected void UpdateViewFromGattState(){
         if(isBound){
@@ -69,16 +77,16 @@ public class MainActivity extends AppCompatActivity{
         int statusLvl = state.status.ordinal();
         boolean dc,test,advert,hidbuild;
         String sconnHost,sbondState,sbondables;
-
         dc = statusLvl >= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal();
         test = statusLvl == GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal();
         advert = statusLvl == GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST.ordinal();
         hidbuild = statusLvl == GattServiceState.SERVICE_STATUS.IDLE_NODATA.ordinal();
-
         bleAdvertButton.setEnabled(advert);
         testButton.setEnabled(test);
         disconnectButton.setEnabled(dc);
         buildButton.setEnabled(hidbuild);
+
+        Log.w("UI",String.format("Message Received with: %s %s %s",state.name,state.address,state.bondstate));
 
         sconnHost = statusLvl>= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()?state.name:"DISCONNECTED";
         sbondState = statusLvl>= GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()?state.address:state.status.toString();
@@ -88,8 +96,14 @@ public class MainActivity extends AppCompatActivity{
         bondState.setText(sbondState);
         bondList.setText(sbondables);
 
+        if(statusLvl==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal() && satTest ==null){
+            satTest = new Timer();
+            stest = new saturationTest();
+            satTest.scheduleAtFixedRate(stest.runTest(gattService.GetPipe(),1, 0.75,15,1000),1000,15);
+        }
     }
-
+    private Timer satTest;
+    private saturationTest stest;
     @Override
     protected void onStart() {
         super.onStart();
@@ -112,7 +126,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onResume(){
         super.onResume();
         bindService();
-        //gattService.SubscribeToEventBus(this,gattServiceCallbacks);
+//        gattService.SubscribeToEventBus(this,gattServiceCallbacks);
         Log.i("APP","onResume entered");
     }
     @Override
@@ -180,6 +194,7 @@ public class MainActivity extends AppCompatActivity{
             PlayEmGATTService.mBinder binderLink = (PlayEmGATTService.mBinder) service;
             gattService = binderLink.getService();
             isBound = true;
+            Log.i("DEBUG","MainActivity onServiceConnected " + Thread.currentThread().getName());
             gattService.DeferredConstructor(MainActivity.this);
             gattService.SubscribeToEventBus(MainActivity.this,gattServiceCallbacks);
             UpdateViewFromGattState();

@@ -26,7 +26,7 @@ public class UUIDUtil {
     public static final UUID SERVICE_BAS = UUID.fromString("0000180F" + BTBaseNumber);
     public static final UUID CHAR_BATTERY_LEVEL = UUID.fromString("00002A19" + BTBaseNumber); //Implement the only mandatory field for bat
 
-    //Advertisement Types
-    public static final UUID ADVERT_APPEARANCE = UUID.fromString("00002A01"+UUIDUtil.BTBaseNumber);
-    public static final UUID ADVERT_LOCALNAME_F = UUID.fromString("00002A00"+UUIDUtil.BTBaseNumber);
+    //Advertisement Types?
+    public static final UUID U16_APPEARANCE = UUID.fromString("00002A01"+UUIDUtil.BTBaseNumber);
+    public static final UUID U16_LOCALNAME_F = UUID.fromString("00002A00"+UUIDUtil.BTBaseNumber);
 }

@@ -1,17 +1,22 @@
 package com.example.playem.ControllerEmulatorSurfaceView;
 
 import android.graphics.Canvas;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 class ControllerEmulatorLoop extends Thread{
     private static final double MaxUps = 100;
     private static final double TargetUpsPeriod = 1E+3/MaxUps;
     private boolean isRunning = false;
-    private SurfaceHolder surfaceHolder;
-    private ControllerEmulator controllerEmulator;
+    private final SurfaceHolder surfaceHolder;
+    private final ControllerEmulator controllerEmulator;
     private double averageUPS;
 
-
+    protected void Stop(){
+        synchronized ((Object) isRunning){
+            isRunning = false;
+        }
+    }
     public ControllerEmulatorLoop(ControllerEmulator controllerEmulator, SurfaceHolder surfaceHolder) {
         this.controllerEmulator = controllerEmulator;
         this.surfaceHolder = surfaceHolder;
@@ -29,6 +34,7 @@ class ControllerEmulatorLoop extends Thread{
     @Override
     public void run() {
         super.run();
+        long loopretry=0;
 
         // Declare time and cycle counts
         int UpdateCount = 0;
@@ -43,7 +49,12 @@ class ControllerEmulatorLoop extends Thread{
         while (isRunning) {
             //Try to update and render controller Emulator
             try {
-                canvas = surfaceHolder.lockCanvas();
+                canvas = surfaceHolder.lockCanvas();//
+                if(canvas==null){
+                    loopretry++;
+                    Log.i("LOOP",String.format("Emulator Loop failed to lock canvas %d",loopretry));
+                    continue;
+                }
                 // Stop threads from updating emulator multiple times
                 synchronized (surfaceHolder) {
                     controllerEmulator.update();
@@ -52,8 +63,9 @@ class ControllerEmulatorLoop extends Thread{
                     controllerEmulator.draw(canvas);
                 }
                 surfaceHolder.unlockCanvasAndPost(canvas);
-            } catch (IllegalArgumentException error){
-                error.getStackTrace();
+            } catch (Exception e){
+                Log.e("LOOP",e.toString());
+
             }
 
 
@@ -85,6 +97,9 @@ class ControllerEmulatorLoop extends Thread{
                 UpdateCount = 0;
                 startTime = System.currentTimeMillis();
             }
+        }
+        synchronized (this){
+            this.notifyAll();
         }
     }
 }
