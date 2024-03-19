@@ -210,10 +210,11 @@ public class PlayEmBTManager extends BluetoothGattServerCallback implements Gatt
     public void attachNotifier(String dAddress) {
 
         try{
+            Log.i("BOND",String.format("Setting Bond to: %s",dAddress));
             attachNotifier(ConnectedHost.get(dAddress));
             promises.onNotifierChanged(PlayEmGATTService.SERVICE_STATES.NOTIFY_ATTACHED);
         }catch (Exception e){
-            Log.e("NOTIFY","Attaching the notifier failed");
+            Log.e("NOTIFY",String.format("Attaching the notifier failed:\n %s",e.toString()));
             promises.onNotifierChanged(PlayEmGATTService.SERVICE_STATES.ACTION_FAIL);
         }
     }
