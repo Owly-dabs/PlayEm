@@ -5,8 +5,10 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 import android.os.Build;
+import android.util.Log;
 
 import com.example.playem.btmanager.blehandlers.interfaces.BLETimedNotification;
+import com.example.playem.hid.HIDUtils;
 import com.example.playem.pipes.PlayEmDataPipe;
 
 import java.util.TimerTask;
