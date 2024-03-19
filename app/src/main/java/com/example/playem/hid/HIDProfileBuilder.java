@@ -1,5 +1,7 @@
 package com.example.playem.hid;
 
+import android.util.Log;
+
 import com.example.playem.hid.interfaces.ChunkType;
 import com.example.playem.hid.interfaces.HIDChunk;
 import com.example.playem.hid.usagepages.USAGE_BUTTON;
@@ -19,9 +21,11 @@ public class HIDProfileBuilder {
     }
     private final List<Byte> Top;
     private final Stack<Byte> Bottom;
-
+    private boolean isBuilt = false;
     private int axes_count = 0;
     public void Build(){
+        if(isBuilt)
+            return;
         AddDesktopGenericUsagePage();
         CollectionStart(HIDDescriptor.COLLECTIONTYPES.APPLICATION);
         CollectionStart(HIDDescriptor.COLLECTIONTYPES.LOGICAL);
@@ -32,6 +36,7 @@ public class HIDProfileBuilder {
         AddAxes(5,(byte)2);
         CollectionEnd();
         CollectionEnd();
+        isBuilt = true;
     }
       /*  Input 1000 00 nn Bit 0
         {Data (0) | Constant (1)}                       1
@@ -44,8 +49,19 @@ public class HIDProfileBuilder {
         Reserved (0)
         {Bit Field (0) | Buffered Bytes (1)}
         Reserved (0)*/
-
+    public void StartJoyStick(){
+        AddDesktopGenericUsagePage();
+        CollectionStart(HIDDescriptor.COLLECTIONTYPES.APPLICATION);
+        CollectionStart(HIDDescriptor.COLLECTIONTYPES.LOGICAL);
+    }
+    public void EndJoyStick(){
+        CollectionEnd();
+        CollectionEnd();
+        isBuilt = true;
+    }
     public void AddAxes(int nAxes, byte inputParams) {
+        if(nAxes==0)
+            return;
         if(nAxes>9){
             throw new RuntimeException("Too Many Axes");
         }
@@ -94,6 +110,8 @@ public class HIDProfileBuilder {
     }
 
     public void AddButtons(int nButtons,byte inputParams){
+        if(nButtons==0)
+            return;
         if(nButtons>32){
             throw new RuntimeException("Too Many Buttons");
         }
@@ -161,7 +179,7 @@ public class HIDProfileBuilder {
             reportMap[i] = Top.get(i);
         }
         //DEBUG only
-        //Log.w("REPORTMAP",HIDUtils.bytesToHex(reportMap));
+        Log.w("REPORTMAP",HIDUtils.bytesToHex(reportMap));
         return reportMap;
     }
 
