@@ -91,12 +91,15 @@ public class PlayEmGATTService extends Service{
     private Activity focusedActivity;
     private HashMap<Integer, HIDChunk> dataChunks;
     private BroadcastReceiver bondStateReceiver;
-    protected void BuildPipe(HIDProfileBuilder builder){
+
+    public void BuildPipe(HIDProfileBuilder builder){
+        builder.Build();
+        BuildPipe(builder,new PlayEmDataPipe(builder.GetChunks()));
+    }
+    public void BuildPipe(HIDProfileBuilder builder,PlayEmDataPipe dataPipe){
         if(_constructed){
             executorPool.execute(()->{
-                //HIDProfileBuilder builder = new HIDProfileBuilder();
-                builder.Build();
-                dataPipe = new PlayEmDataPipe(builder.GetChunks());
+                this.dataPipe = dataPipe;
                 dataChunks = builder.GetChunks();
                 btManager.GattServerInit(builder.GetReportMap(),new byte[]{},dataPipe);
                 registerReceiver(bondStateReceiver = btManager.bondStateReceiver(),new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
@@ -115,7 +118,7 @@ public class PlayEmGATTService extends Service{
         BluetoothManager bm = (BluetoothManager) this.getSystemService(Context.BLUETOOTH_SERVICE);
         return bm;
     }
-    protected void StartAdvertisement(){
+    public void StartAdvertisement(){
         if(_constructed){
             executorPool.execute(()->{
                 btManager.AdvertiseHID();
