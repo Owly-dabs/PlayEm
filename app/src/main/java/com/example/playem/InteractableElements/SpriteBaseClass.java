@@ -19,8 +19,5 @@ public abstract class SpriteBaseClass {
         this.CentreY = CentreY;
         this.ShouldRedraw = ShouldRedraw;
     }
-
-
     public void draw(Canvas canvas) {}
-
 }

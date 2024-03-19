@@ -93,6 +93,7 @@ public class ElementHandler{
     }
     public Map<Integer, int[]> getOutputs(){
         return OutputsMap;
+
     }
 
     public void update() {

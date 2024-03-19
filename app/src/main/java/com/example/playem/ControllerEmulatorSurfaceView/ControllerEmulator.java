@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.example.playem.InteractableElements.*;
+
 import com.example.playem.R;
 
 
@@ -28,6 +29,7 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         //get Surface Holder and callback
         SurfaceHolder surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
+
         //instantiate ControllerEmulatorLoop
         CELoop = new ControllerEmulatorLoop(this, surfaceHolder);
 
@@ -46,8 +48,6 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         ControllerElement[] ELEMENTS = {thumbStick, thumbStick2, button, button2, button3};
         elementLoader.loadELEMENTS(ELEMENTS);
         /// TESTING ///
-
-
         elementHandler = new ElementHandler(elementLoader.GetPositionHashMap(), ELEMENTS);
 
         //set focus to true
@@ -78,6 +78,7 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         }
         // pass elementHandler.getOutputs() to bluetooth stuff
         return super.onTouchEvent(event);
+
     }
 
     @Override
@@ -112,6 +113,7 @@ public class ControllerEmulator extends SurfaceView implements SurfaceHolder.Cal
         elementHandler.draw(canvas);
 
         // Draw update text on screen
+
         Paint paint = new Paint();
         int colour = ContextCompat.getColor(this.getContext(), R.color.white);
         paint.setColor(colour);

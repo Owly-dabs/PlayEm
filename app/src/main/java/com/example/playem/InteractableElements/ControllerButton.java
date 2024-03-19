@@ -25,7 +25,6 @@ public class ControllerButton extends ControllerElement {
         ButtonPaintPressed.setColor(Color.DKGRAY);
         ButtonPaintPressed.setStyle(Paint.Style.FILL_AND_STROKE);
 
-
     }
     @Override
     public boolean isPressed(double touchX, double touchY) {

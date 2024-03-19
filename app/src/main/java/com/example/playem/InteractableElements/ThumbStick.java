@@ -7,6 +7,7 @@ import android.graphics.Paint;
 
 // Not used will be removed later
 public class ThumbStick extends ControllerElement{
+
     private final Paint InnerCirclePaint;
     private final Paint OuterCirclePaint;
     private double InnerCirclePosX;
@@ -27,6 +28,7 @@ public class ThumbStick extends ControllerElement{
         this.InnerCirclePosX = CentreX;
         this.InnerCirclePosY = CentreY;
         super.radius = this.OuterCircleRadius = OuterCircleRadius;
+
         this.InnerCircleRadius = InnerCircleRadius;
 
         // Colour of ThumbSticks (temporary solution for now)
@@ -39,11 +41,12 @@ public class ThumbStick extends ControllerElement{
         this.InnerCirclePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
     }
-    // Methods
+
     @Override
     public boolean isPressed(double touchX, double touchY) {
         return distanceToCentreSquared(touchX, touchY) < Math.pow(OuterCircleRadius, 2);
     }
+
     public void setActuator(double touchX, double touchY) {
         double dX = touchX - CentreX;
         double dY = touchY - CentreY;

@@ -35,6 +35,7 @@ class ControllerEmulatorLoop extends Thread{
     public void run() {
         super.run();
         long loopretry=0;
+
         // Declare time and cycle counts
         int UpdateCount = 0;
 
@@ -64,6 +65,7 @@ class ControllerEmulatorLoop extends Thread{
                 surfaceHolder.unlockCanvasAndPost(canvas);
             } catch (Exception e){
                 Log.e("LOOP",e.toString());
+
             }
 
 
