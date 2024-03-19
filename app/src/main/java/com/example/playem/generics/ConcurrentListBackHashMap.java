@@ -41,9 +41,9 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
             if(idx<len){
                 O retval = internalList.get(idx);
                 internalList.set(idx,internalList.get(len-1));
-                internalList.remove(len-1);
                 internalKeyList.set(idx,internalKeyList.get(len-1));
                 internalList.remove(len-1);
+                internalHash.remove(key);
                 return retval;
             }
         }
