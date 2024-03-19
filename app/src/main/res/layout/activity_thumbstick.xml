@@ -121,6 +121,13 @@
                 android:text="B" />
 
             <Button
+                android:id="@+id/AdvertiseButton"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_margin="4dp"
+                android:text="A" />
+
+            <Button
                 android:id="@+id/loadButton"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
@@ -128,11 +135,11 @@
                 android:text="L" />
 
             <Button
-                android:id="@+id/AdvertiseButton"
+                android:id="@+id/bRemoveBond"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_margin="4dp"
-                android:text="A" />
+                android:text="BD" />
 
         </LinearLayout>
 

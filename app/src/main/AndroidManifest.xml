@@ -60,10 +60,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".EmulatorActivity"
-            android:exported="false"
-            android:theme="@style/PlayEm.NoActionBar" />
-        <activity
             android:name=".ControllerReactiveActivity"
             android:exported="false"
             android:theme="@style/PlayEm.NoActionBar" />
