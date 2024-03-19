@@ -85,7 +85,6 @@ public class MainActivity extends AppCompatActivity{
         testButton.setEnabled(test);
         disconnectButton.setEnabled(dc);
         buildButton.setEnabled(hidbuild);
-        controlViewButton.setEnabled(false);
 
         Log.w("UI",String.format("Message Received with: %s %s %s",state.name,state.address,state.bondstate));
 
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onResume(){
         super.onResume();
         bindService();
-        //gattService.SubscribeToEventBus(this,gattServiceCallbacks);
+//        gattService.SubscribeToEventBus(this,gattServiceCallbacks);
         Log.i("APP","onResume entered");
     }
     @Override
