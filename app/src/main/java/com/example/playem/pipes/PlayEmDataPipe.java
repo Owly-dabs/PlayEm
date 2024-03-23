@@ -2,7 +2,7 @@ package com.example.playem.pipes;
 
 import android.util.Log;
 
-import com.example.playem.btmanager.blehandlers.interfaces.ConcurrentTransferBuffer;
+import com.example.playem.bluetoothLE.blehandlers.interfaces.ConcurrentTransferBuffer;
 import com.example.playem.hid.interfaces.ChunkType;
 import com.example.playem.hid.interfaces.HIDChunk;
 
