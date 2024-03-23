@@ -26,8 +26,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
-import com.example.playem.btmanager.BluetoothPermissionsHandler;
-import com.example.playem.btmanager.PlayEmBTManager;
+import com.example.playem.bluetoothLE.BluetoothPermissionsHandler;
+import com.example.playem.bluetoothLE.PlayEmBTManager;
 import com.example.playem.generics.ServiceHandler;
 import com.example.playem.hid.HIDProfileBuilder;
 import com.example.playem.hid.interfaces.HIDChunk;
@@ -39,8 +39,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class PlayEmGATTService extends Service{
-    public PlayEmGATTService(){
+public class AppGattService extends Service{
+    public AppGattService(){
     }
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
@@ -365,8 +365,8 @@ public class PlayEmGATTService extends Service{
     private BluetoothPermissionsHandler btPermissionHandler;
 
 public class mBinder extends Binder{
-    PlayEmGATTService getService(){
-        return PlayEmGATTService.this;
+    AppGattService getService(){
+        return AppGattService.this;
     }
 }
 public enum SERVICE_STATES {
