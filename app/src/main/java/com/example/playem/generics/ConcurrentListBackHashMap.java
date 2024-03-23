@@ -38,14 +38,16 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
         if(internalHash.containsKey(key)){
             int idx = internalHash.get(key);
             int len = internalList.size();
-            if(idx<len){
-                O retval = internalList.get(idx);
-                internalList.set(idx,internalList.get(len-1));
-                internalKeyList.set(idx,internalKeyList.get(len-1));
-                internalList.remove(len-1);
-                internalHash.remove(key);
-                return retval;
-            }
+            O retval = internalList.get(idx);
+            internalList.set(idx,internalList.get(len-1));
+            internalKeyList.set(idx,internalKeyList.get(len-1));
+            K lastkey = internalKeyList.get(len-1);
+            internalHash.put(lastkey,idx);
+            internalList.remove(len-1);
+            internalKeyList.remove(len-1);
+            internalHash.remove(key);
+            return retval;
+
         }
         return null;
     }
