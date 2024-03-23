@@ -1,11 +1,9 @@
-package com.example.playem.ControllerEmulatorSurfaceView;
+package com.example.playem.appcontroller;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.Log;
-
-import java.util.Set;
 
 public abstract class ControlComponent {
     public ControlComponent(){}
@@ -30,12 +28,10 @@ public abstract class ControlComponent {
     protected float screenCentrePosY;
     public int widthSteps,heightSteps;
     public int pixelsPerStep;
+    public int clearCount=0;
+    public boolean colliding = false;
     public boolean dragging,locked;
     public abstract void Draw(Canvas canvas, Paint bgPaintObject);
-
-    public void ClearDrawSpace(Canvas canvas,Paint bgPaintObject){
-        canvas.drawRect(this.drawSpace,bgPaintObject);
-    }
     public void MoveCentre(int gridW, int gridH){
         positionX = (gridW-widthSteps)/2;
         positionY = (gridH-heightSteps)/2;
