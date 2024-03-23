@@ -1,5 +1,6 @@
-package com.example.playem.ControllerEmulatorSurfaceView.VirtualControls;
+package com.example.playem.appcontroller.VirtualControls;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -7,11 +8,10 @@ import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import com.example.playem.ControllerEmulatorSurfaceView.ControlComponent;
-import com.example.playem.ControllerEmulatorSurfaceView.ControlHandler;
-import com.example.playem.ControllerEmulatorSurfaceView.interfaces.Buildable;
+import com.example.playem.appcontroller.ControlComponent;
+import com.example.playem.appcontroller.ControlHandler;
+import com.example.playem.appcontroller.interfaces.Buildable;
 import com.example.playem.hid.interfaces.ChunkType;
-import com.example.playem.pipes.InputPipeCallbacks;
 import com.example.playem.pipes.PlayEmDataPipe;
 
 public class ThumbStick extends ControlComponent implements ControlHandler , Buildable {
@@ -36,15 +36,15 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         this.handler = this;
     }
 
-    private int minstep = 2;
+    private final int minstep = 2;
     private float pointyRatio = 0.5f;
     private float baseRatio = 0.7f;
     private float baseband = 0.2f;
-    private boolean debugCollision = false;
     private boolean building = false;
     private float pointyX,pointyY=-1f;
     private Paint basePobj;
     private Paint pointyPobj;
+    @SuppressLint("DefaultLocale")
     @Override
     public synchronized void Draw(Canvas canvas, Paint bgPaintObject) {
         float drawLength = this.widthSteps*this.pixelsPerStep;
@@ -63,8 +63,9 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         Paint p = new Paint();
         p.setTextSize(30);
         p.setColor(Color.WHITE);
-        canvas.drawRect(450,150,1700,210,bgPaintObject);
-        canvas.drawText(String.format("%f %f",lastValuePack[0].relPixelX,lastValuePack[0].relPixelY),500,200,p);
+        canvas.drawRect(drawSpace.left,drawSpace.top,drawSpace.right,drawSpace.top+50,bgPaintObject);
+        String details = String.format("%d %d",lastValuePack[0].x,lastValuePack[0].y);
+        canvas.drawText(details,drawSpace.left,drawSpace.top+50,p);
     }
 
     private ValuePack[] lastValuePack;
@@ -85,8 +86,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         //Log.i("THUMB",String.format("onMove Draw %f %f",x,y));
         lastValuePack[0].type = ChunkType.AXES2;
         float maxlen = widthSteps*pixelsPerStep;
-        lastValuePack[0].x = (int)x;
-        lastValuePack[0].y = (int)y;
+        lastValuePack[0].relPixelX = (int)x;
+        lastValuePack[0].relPixelY = (int)y;
 
         float relX = Math.min(Math.max(x,drawSpace.left),drawSpace.right);
         float relY = Math.min(Math.max(y,drawSpace.top),drawSpace.bottom);
@@ -94,11 +95,12 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         pointyY = relY;
         pointyX = relX;
         //Log.i("THUMB",String.format("onMove Draw Point %f %f",pointyX,pointyY));
-        lastValuePack[0].relPixelX = (int)(((relX-drawSpace.left)/maxlen)*65535);
-        lastValuePack[0].relPixelY = (int)(((relY-drawSpace.top)/maxlen)*65535);
+        lastValuePack[0].x = (int)(((relX-drawSpace.left)/maxlen)*65535);
+        lastValuePack[0].y = (int)(((relY-drawSpace.top)/maxlen)*65535);
         if(dataPipe!=null){
-        dataPipe.UpdateAxis(reportID,(int)lastValuePack[0].relPixelX);
-        dataPipe.UpdateAxis(reportID+1,(int)lastValuePack[0].relPixelY);}
+            dataPipe.UpdateAxis(reportID,(int)lastValuePack[0].x);
+            dataPipe.UpdateAxis(reportID+1,(int)lastValuePack[0].y);
+        }
         return lastValuePack;
     }
     @Override //TODO remove and make as default function (optional override)
@@ -108,7 +110,7 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
 
     @Override
     public void Resize(int step) {
-        int squarestep = Math.min(this.widthSteps+step,minstep);
+        int squarestep = Math.max(this.widthSteps+step,minstep);
         this.widthSteps= squarestep;
         this.heightSteps = squarestep;
     }
@@ -117,6 +119,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
     public void MoveAndUpdateDrawSpace(int datumX, int datumY) {
         SetDatums(datumX,datumY);
         onMove(screenCentrePosX,screenCentrePosY,0);
+        pointyX = screenCentrePosX;
+        pointyY = screenCentrePosY;
     }
 
     @Override
@@ -124,6 +128,12 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         this.building = newState;
         String state = newState?"True":"False";
         Log.w("BUILDMODE",String.format("Entered Build Mode %s",state));
+    }
+
+    @Override
+    public void DrawColliderBox(Canvas screen, Paint colliderColor,int stroke_width) {
+        Rect r = new Rect(drawSpace.left+stroke_width,drawSpace.top+stroke_width,drawSpace.right-stroke_width,drawSpace.bottom+stroke_width);
+        screen.drawRect(r,colliderColor);
     }
 
     @Override
