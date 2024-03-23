@@ -4,20 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cGrid"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:animationCache="true">
 
     <FrameLayout
         android:id="@+id/cGridLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:alpha="1"
+        android:alwaysDrawnWithCache="false"
+        android:animateLayoutChanges="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
     </FrameLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cOverlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="1">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:id="@+id/lControlEdits"
@@ -26,6 +33,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
+            android:animateLayoutChanges="true"
+            android:animationCache="false"
             android:background="@drawable/control_settings_bg"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -55,6 +64,8 @@
             android:layout_width="469dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:animateLayoutChanges="true"
+            android:animationCache="false"
             android:background="@drawable/control_settings_bg"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -95,6 +106,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
+            android:animateLayoutChanges="true"
+            android:animationCache="false"
             android:background="@drawable/control_settings_bg"
             android:orientation="vertical"
             android:paddingLeft="4dp"
@@ -150,6 +163,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:alpha="1"
+            android:animateLayoutChanges="true"
+            android:animationCache="false"
             android:background="@drawable/control_settings_bg"
             android:orientation="vertical"
             android:padding="8dp"
@@ -181,4 +196,5 @@
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </FrameLayout>
