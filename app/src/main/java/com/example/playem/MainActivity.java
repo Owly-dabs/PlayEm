@@ -12,6 +12,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,14 +25,14 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MainActivity extends AppCompatActivity{
-    PlayEmGATTService gattService;
+    AppGattService gattService;
     boolean isBound = false;
     Button bleAdvertButton,testButton,disconnectButton;
     Button buildButton, controlViewButton;
     TextView hostName,bondState,bondList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //EdgeToEdge.enable(this);
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //TODO: Move this to after surface view is started
@@ -45,7 +46,6 @@ public class MainActivity extends AppCompatActivity{
         hostName = findViewById(R.id.tHostName);
         bondState = findViewById(R.id.tBond);
         bondList = findViewById(R.id.tBondedList);
-
         setUpClickies();
 
     }
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity{
         });
         buildButton.setOnClickListener(v->gattService.BuildPipe(new HIDProfileBuilder()));
         controlViewButton.setOnClickListener(v->{
-            Intent goControlsView = new Intent(getApplicationContext(), ControllerReactiveActivity.class);
+            Intent goControlsView = new Intent(getApplicationContext(), ControllerActivity.class);
             startActivity(goControlsView);
         });
     }
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void bindService(){
-        Intent intent = new Intent(this, PlayEmGATTService.class);
+        Intent intent = new Intent(this, AppGattService.class);
         startService(intent);
         if(!bindService(intent, gattServiceConnection,BIND_AUTO_CREATE)) {
             Log.e("BINDER","Error in binding");
@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.w("BINDER","Binder connected");
-            PlayEmGATTService.mBinder binderLink = (PlayEmGATTService.mBinder) service;
+            AppGattService.mBinder binderLink = (AppGattService.mBinder) service;
             gattService = binderLink.getService();
             isBound = true;
             Log.i("DEBUG","MainActivity onServiceConnected " + Thread.currentThread().getName());
