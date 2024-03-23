@@ -4,8 +4,10 @@ import android.util.Log;
 
 import com.example.playem.hid.interfaces.ChunkType;
 import com.example.playem.hid.interfaces.HIDChunk;
-import com.example.playem.hid.usagepages.USAGE_BUTTON;
-import com.example.playem.hid.usagepages.USAGE_DESKTOP_GENERIC;
+import com.example.playem.hid.utils.HIDDescriptor;
+import com.example.playem.hid.utils.HIDUtils;
+import com.example.playem.hid.utils.USAGE_BUTTON;
+import com.example.playem.hid.utils.USAGE_DESKTOP_GENERIC;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,7 +141,7 @@ public class HIDProfileBuilder {
             Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_COUNT);
             Top.add((byte)0x01);
             Top.add(HIDDescriptor.DESCRIPTORIDS.REPORT_SIZE);
-            Top.add((byte)(nButtons%8));
+            Top.add((byte)(8-nButtons%8));
             Top.add(HIDDescriptor.DESCRIPTORIDS.INPUT);
             Top.add((byte)(1|2)); //Const Var Abs
         }
@@ -179,7 +181,7 @@ public class HIDProfileBuilder {
             reportMap[i] = Top.get(i);
         }
         //DEBUG only
-        Log.w("REPORTMAP",HIDUtils.bytesToHex(reportMap));
+        Log.w("REPORTMAP", HIDUtils.bytesToHex(reportMap));
         return reportMap;
     }
 
