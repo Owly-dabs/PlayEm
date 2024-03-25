@@ -6,111 +6,224 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/bControls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="56dp"
-        android:text="Control View"
+    <ViewSwitcher
+        android:id="@+id/viewSwitcher"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/bAdvertise"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Advertise"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.096"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.061"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/tHostName"
-        android:layout_width="213dp"
-        android:layout_height="56dp"
-        android:text="No Connected Device"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.466"
-        app:layout_constraintStart_toEndOf="@+id/bAdvertise"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.062" />
-
-    <Button
-        android:id="@+id/bTest"
-        android:layout_width="117dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:text="Test All"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.091"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bAdvertise" />
-
-    <TextView
-        android:id="@+id/tBond"
-        android:layout_width="211dp"
-        android:layout_height="40dp"
-        android:text="Not Bonded"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.464"
-        app:layout_constraintStart_toEndOf="@+id/bTest"
-        app:layout_constraintTop_toBottomOf="@+id/tHostName"
-        app:layout_constraintVertical_bias="0.013" />
-
-    <ScrollView
-        android:id="@+id/scrollView2"
-        android:layout_width="354dp"
-        android:layout_height="143dp"
-        android:layout_marginTop="50dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tBond">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
+        <!-- Main Menu view -->
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:background="#333333">
+
+            <!-- Line 1 -->
+            <View
+                android:id="@+id/line1"
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="#222222" />
+
+            <!-- Settings Button -->
+            <Button
+                android:id="@+id/btnSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/line1"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="sans-serif-light"
+                android:text="Settings"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Line 2 -->
+            <View
+                android:id="@+id/line2"
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_below="@id/btnSettings"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="#222222" />
+
+            <!-- Build Button -->
+            <Button
+                android:id="@+id/btnBuild"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/line2"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="sans-serif-light"
+                android:text="Build Controller"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Line 3 -->
+            <View
+                android:id="@+id/line3"
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_below="@id/btnBuild"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="#222222" />
+
+            <!-- Saves Button -->
+            <Button
+                android:id="@+id/btnSaves"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/line3"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="sans-serif-light"
+                android:text="Saves"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Line 4 -->
+            <View
+                android:id="@+id/line4"
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_below="@id/btnSaves"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="#222222" />
+
+            <!-- Connections Button -->
+            <Button
+                android:id="@+id/btnConnections"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/line4"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="sans-serif-light"
+                android:text="Connections"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+        </RelativeLayout>
+
+        <!-- Connection view -->
+        <LinearLayout
+            android:id="@+id/ConnectionLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tBondedList"
+            <!-- Buttons and ScrollView here -->
+
+            <ImageButton
+                android:id="@+id/btnBack"
                 android:layout_width="match_parent"
-                android:layout_height="277dp"
-                android:text="TextView"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginTop="16dp"
+                android:background="@android:color/transparent"
+                app:srcCompat="?attr/actionModeCloseDrawable"
+                android:contentDescription="return to MainMenu" />
+
+            <Button
+                android:id="@+id/bControls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="Control View" />
+
+            <Button
+                android:id="@+id/bAdvertise"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="Advertise" />
+
+            <TextView
+                android:id="@+id/tHostName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="No Connected Device"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
+            <!-- ScrollView and its child layout -->
+            <ScrollView
+                android:id="@+id/scrollView2"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="16dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tBond"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Not Bonded" />
+
+                    <TextView
+                        android:id="@+id/tBondedList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="TextView"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+                </LinearLayout>
+            </ScrollView>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="0dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/bDisconnect"
+                    android:layout_width="135dp"
+                    android:layout_height="wrap_content"
+                    android:text="Disconnect"
+                    style="?android:attr/buttonBarButtonStyle" />
+
+                <Button
+                    android:id="@+id/bTest"
+                    android:layout_width="135dp"
+                    android:layout_height="wrap_content"
+                    android:text="Test All"
+                    style="?android:attr/buttonBarButtonStyle" />
+
+                <Button
+                    android:id="@+id/bBuild"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="142dp"
+                    android:layout_height="wrap_content"
+                    android:text="Build HID" />
+            </LinearLayout>
+
         </LinearLayout>
-    </ScrollView>
 
-    <Button
-        android:id="@+id/bDisconnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Disconnect"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView2"
-        app:layout_constraintVertical_bias="0.411" />
+    </ViewSwitcher>
 
-    <Button
-        android:id="@+id/bBuild"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="142dp"
-        android:text="Build HID"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView2"
-        app:layout_constraintVertical_bias="0.379" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
