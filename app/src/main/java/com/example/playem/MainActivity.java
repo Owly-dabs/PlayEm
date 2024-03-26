@@ -10,7 +10,9 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -27,14 +29,27 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MainActivity extends AppCompatActivity{
     AppGattService gattService;
     boolean isBound = false;
+    ViewSwitcher viewSwitcher;
+    ImageButton backButton;
+    Button connectionsButton, savesButton, settingsButton, buildControllerButton;
     Button bleAdvertButton,testButton,disconnectButton;
     Button buildButton, controlViewButton;
     TextView hostName,bondState,bondList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        viewSwitcher = findViewById(R.id.viewSwitcher);
+        settingsButton = findViewById(R.id.btnSettings);
+        savesButton = findViewById(R.id.btnSaves);
+        connectionsButton = findViewById(R.id.btnConnections);
+        buildControllerButton = findViewById(R.id.btnBuild);
+        backButton = findViewById(R.id.btnBack);
+
+
         //TODO: Move this to after surface view is started
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         bleAdvertButton = findViewById(R.id.bAdvertise);
@@ -42,6 +57,7 @@ public class MainActivity extends AppCompatActivity{
         disconnectButton = findViewById(R.id.bDisconnect);
         buildButton = findViewById(R.id.bBuild);
         controlViewButton = findViewById(R.id.bControls);
+
 
         hostName = findViewById(R.id.tHostName);
         bondState = findViewById(R.id.tBond);
@@ -51,6 +67,15 @@ public class MainActivity extends AppCompatActivity{
     }
 
     protected void setUpClickies(){
+        settingsButton.setOnClickListener(v -> {});
+        savesButton.setOnClickListener(v -> {});
+        buildControllerButton.setOnClickListener(v -> {
+            Intent goControlsView = new Intent(getApplicationContext(), ControllerActivity.class);
+            startActivity(goControlsView);
+        });
+        connectionsButton.setOnClickListener(v -> viewSwitcher.showNext());
+        backButton.setOnClickListener(v -> viewSwitcher.showPrevious());
+
         bleAdvertButton.setOnClickListener(v -> gattService.StartAdvertisement());
         testButton.setOnClickListener(v -> gattService.StartInput(bondState.getText().toString()));
         disconnectButton.setOnClickListener(v -> {
@@ -206,5 +231,7 @@ public class MainActivity extends AppCompatActivity{
             gattService= null;
         }
     };
+
+
 }
 
