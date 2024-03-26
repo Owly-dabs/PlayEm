@@ -1,2 +1,2 @@
-# PlayEm
-A bluetooth controller emulator on andorid devices.
+# AnyHID
+BLE Custom Controller Android App
