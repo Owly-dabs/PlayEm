@@ -1,4 +1,4 @@
-package com.example.playem.bluetoothLE;
+package com.example.playem.bluetoothLE.utils;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class BondStateBroadcastReceiver extends BroadcastReceiver {
         int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,BluetoothDevice.ERROR);
         //int pstate = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE,BluetoothDevice.ERROR);
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-        Log.i("BONDREC",String.format("Bond receive received for %s : %d",device.getName(),state));
+        //Log.i("BONDREC",String.format("Bond receive received for %s : %d",device.getName(),state));
         if(state == BluetoothDevice.BOND_BONDED){
 
             BluetoothManager bm =  (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);

@@ -5,15 +5,10 @@ import android.graphics.Color;
 import com.example.playem.appcontroller.interfaces.BuildableViewCallbacks;
 
 public class MandatoryButton extends SimpleButton{
-    public MandatoryButton(){
-        super();
-    }
-    private BuildableViewCallbacks buildviewCallback;
-    public MandatoryButton(int idxX, int idxY, int pixelsPerStep, BuildableViewCallbacks buildableViewCallbacks){
-        super(idxX, idxY,pixelsPerStep,-1);
-        this.buildviewCallback = buildableViewCallbacks;
-        this.widthSteps = 2;
-        this.heightSteps = 2;
+    private final BuildableViewCallbacks buildViewCallback;
+    public MandatoryButton(int idxX, int idxY, int width,int height,int pixelsPerStep, BuildableViewCallbacks buildableViewCallbacks){
+        super(idxX, idxY,width<1?2:width,height<1?2:height,pixelsPerStep,-1);
+        this.buildViewCallback = buildableViewCallbacks;
         outerRingPobj.setColor(Color.WHITE);
         innerPobj.setColor(Color.WHITE);
         innerPressedPobj.setColor(Color.GRAY);
@@ -27,7 +22,7 @@ public class MandatoryButton extends SimpleButton{
     @Override
     public ValuePack[] onEnter(float x, float y, int pointerId) {
         lastValuePack[0].x = 1;
-        buildviewCallback.ShowMenuOptions();
+        buildViewCallback.ShowMenuOptions();
         return this.lastValuePack;
     }
 

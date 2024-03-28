@@ -272,9 +272,10 @@ public class ControlGrid {
         MasterComponentList.AddorUpdate(component.pipeID,buildable);
         uniqueComponent++;
         focusedComponent = component;
-        parentActivity.HideMenuOptions();
-        parentActivity.ShowControlOptions();
-
+        if(firstBuild) {
+            parentActivity.HideMenuOptions();
+            parentActivity.ShowControlOptions();
+        }
         //return
     }
     public void AcceptEdits(){
@@ -296,8 +297,10 @@ public class ControlGrid {
         if(firstBuild)
             component.MoveCentre((int)gridWidth,(int)gridHeight);
         component.pipeID = uniqueComponent;
-        if(!CheckOverlap(component))
+        if(!CheckOverlap(component)){
+            Log.e("GRID","Overlap occurred!");
             return;
+        }
         //drawCalls.add(component);
         Log.i("GRID",String.format("Added Component %d %d",component.positionX,component.positionY));
     }

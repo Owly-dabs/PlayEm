@@ -1,7 +1,5 @@
 package com.example.playem.appcontroller.interfaces;
 
-import android.util.Log;
-
 public interface BuildableViewCallbacks {
     void HideComponentAdd();
     void ShowComponentAdd();

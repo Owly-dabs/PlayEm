@@ -22,7 +22,6 @@ public class BLE_HIDServiceBuilder {
             BluetoothGattService HID_Service = new BluetoothGattService(UUIDUtil.SERVICE_HID,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService BAT_Service = new BluetoothGattService(UUIDUtil.SERVICE_BAS,BluetoothGattService.SERVICE_TYPE_PRIMARY);
             BluetoothGattService DIS_Service = new BluetoothGattService(UUIDUtil.SERVICE_DIS,BluetoothGattService.SERVICE_TYPE_PRIMARY);
-
             ////////////////
             ///DIS Section//
             ////////////////

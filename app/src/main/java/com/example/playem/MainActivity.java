@@ -1,8 +1,6 @@
 package com.example.playem;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -21,8 +19,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
+import com.example.playem.bluetoothLE.utils.PermissionHandler;
 import com.example.playem.hid.HIDProfileBuilder;
-import com.example.playem.testutils.saturationTest;
 import com.example.playem.viewmodels.GattServiceState;
 
 import java.util.Timer;
@@ -65,6 +63,7 @@ public class MainActivity extends AppCompatActivity{
         bondState = findViewById(R.id.tBond);
         bondList = findViewById(R.id.tBondedList);
         setUpClickies();
+        PermissionHandler.CheckPermissions(this);
 
     }
 
@@ -81,11 +80,11 @@ public class MainActivity extends AppCompatActivity{
         bleAdvertButton.setOnClickListener(v -> gattService.StartAdvertisement());
         testButton.setOnClickListener(v -> gattService.StartInput(bondState.getText().toString()));
         disconnectButton.setOnClickListener(v -> {
-            if(satTest!=null){
+           /* if(satTest!=null){
                 satTest.purge();
                 satTest = null;
                 stest = null;
-            }
+            }*/
             gattService.Disconnect();
         });
         buildButton.setOnClickListener(v->gattService.BuildPipe(new HIDProfileBuilder()));
@@ -130,11 +129,11 @@ public class MainActivity extends AppCompatActivity{
         }*/
     }
     private Timer satTest;
-    private saturationTest stest;
+    //private saturationTest stest;
     @Override
     protected void onStart() {
         super.onStart();
-        bindService();
+
     }
     @Override
     protected void onPause() {
@@ -152,8 +151,9 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onResume(){
         super.onResume();
-        bindService();
-//        gattService.SubscribeToEventBus(this,gattServiceCallbacks);
+        if(PermissionHandler.Valid)
+            bindService();
+        //gattService.SubscribeToEventBus(this,gattServiceCallbacks);
         Log.i("APP","onResume entered");
     }
     @Override
@@ -178,18 +178,23 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void bindService(){
+        if(PermissionHandler.Valid){
         Intent intent = new Intent(this, AppGattService.class);
         startService(intent);
         if(!bindService(intent, gattServiceConnection,BIND_AUTO_CREATE)) {
             Log.e("BINDER","Error in binding");
+            }
+        }else{
+            Log.e("PERM","Permissions not satisfied");
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                              @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,@NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        gattService.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        PermissionHandler.checkOnPermissionsResult(requestCode,permissions,grantResults);
+        if(PermissionHandler.Valid)
+            bindService();
     }
     private final GattServiceCallbacks gattServiceCallbacks = new GattServiceCallbacks() { //TODO make a factory class
         @SuppressLint("MissingPermission")

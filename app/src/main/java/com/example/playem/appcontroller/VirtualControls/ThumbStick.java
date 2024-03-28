@@ -18,10 +18,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
     public ThumbStick(){
         super();
     }
-    public ThumbStick(int idxX, int idxY, int pixelsPerStep, int pipeid) {
-        super(idxX, idxY,pixelsPerStep,pipeid);
-        this.widthSteps=5;
-        this.heightSteps=5;
+    public ThumbStick(int idxX, int idxY, int width,int height,int pixelsPerStep, int pipeid) {
+        super(idxX, idxY,width<1?5:width,height<1?5:height,pixelsPerStep,pipeid);
         this.basePobj = new Paint();
         this.pointyPobj = new Paint();
         basePobj.setColor(Color.WHITE);
@@ -102,8 +100,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         lastValuePack[0].x = Math.min((int)(((relX-drawSpace.left)/maxlen)*65535),65535);
         lastValuePack[0].y = Math.min((int)(((relY-drawSpace.top)/maxlen)*65535),65535);
         if(dataPipe!=null){
-            dataPipe.UpdateAxis(reportID,(int)lastValuePack[0].x);
-            dataPipe.UpdateAxis(reportID+1,(int)lastValuePack[0].y);
+            dataPipe.UpdateAxis(reportID, lastValuePack[0].x);
+            dataPipe.UpdateAxis(reportID+1, lastValuePack[0].y);
         }
         return lastValuePack;
     }

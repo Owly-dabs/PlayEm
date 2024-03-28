@@ -28,6 +28,7 @@ import com.example.playem.appcontroller.interfaces.BuildableViewCallbacks;
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
 import com.example.playem.viewmodels.GattServiceState;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,15 +51,12 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
-        windowInsetsControllerCompat =
-                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        //DisplayMetrics displayMetrics = new DisplayMetrics();
-        refreshRate = this.getDisplay().getRefreshRate();
+        windowInsetsControllerCompat = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+
+        refreshRate = Objects.requireNonNull(this.getDisplay()).getRefreshRate();
         Rect r = getWindowManager().getCurrentWindowMetrics().getBounds();
         screenWidth = r.width();
         screenHeight = r.height();
-        //int height = displayMetrics.heightPixels;
-        //int width = displayMetrics.widthPixels;
         // Configure the behavior of the hidden system bars.
         windowInsetsControllerCompat.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         getWindow()
@@ -118,12 +116,8 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
             HideControlOptions();
             ShowControlEditOptions();
         });
-        UpSize.setOnClickListener((View v) -> {
-            controlView.ResizeComponent(1);
-        });
-        DownSize.setOnClickListener((View v) -> {
-            controlView.ResizeComponent(-1);
-        });
+        UpSize.setOnClickListener((View v) -> controlView.ResizeComponent(1));
+        DownSize.setOnClickListener((View v) -> controlView.ResizeComponent(-1));
         RemoveControl.setOnClickListener((View v) -> {
             if (controlView != null) {
                 controlView.RemoveComponent();
@@ -144,23 +138,14 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
             controlView.SwitchToPlay();
             HideAllOptions();
         });*/
-        SaveP.setOnClickListener((View v)->{
-            controlView.SaveProfile("autosave_cache");
-        });
-        LoadP.setOnClickListener((View v)->{
-            runOnUiThread(()-> {
-                controlView.LoadProfile("autosave_cache");
-            });
-        });
+        SaveP.setOnClickListener((View v)-> controlView.SaveProfile("autosave_cache"));
+        LoadP.setOnClickListener((View v)-> runOnUiThread(()-> controlView.LoadProfile("autosave_cache")));
         DCButton.setOnClickListener((View v)->{
             disconnecting = true;
             gattService.Disconnect(true);
-
+            this.finish();
         });
-        XButton.setOnClickListener((View v)->{
-            HideAllOptions();
-        });
-
+        XButton.setOnClickListener((View v)-> HideAllOptions());
     }
     private boolean disconnecting=false;
     @Override
@@ -218,12 +203,8 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
         }
     }
 
-    private final GattServiceCallbacks gattServiceCallbacks = new GattServiceCallbacks() { //TODO make a factory class
-        @Override
-        public Runnable onServiceStatusChanged (GattServiceState newState) {
-            return ()->UpdateViewFromGattState(newState);
-        }
-    };
+    //TODO make a factory class
+    private final GattServiceCallbacks gattServiceCallbacks = newState -> ()->UpdateViewFromGattState(newState);
     protected void UpdateViewFromGattState(){
         if(isBound){
             UpdateViewFromGattState(gattService.getLastValidState());
@@ -309,11 +290,8 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
     }
     @Override
     public void ShowToastError(String message,int duration){
-        this.runOnUiThread(()->{
-            Toast.makeText(this, message, duration).show();
-        });
+        this.runOnUiThread(()-> Toast.makeText(this, message, duration).show());
     }
-
     @Override
     public void ShowControlOptions() {
         this.runOnUiThread(()->{
@@ -356,7 +334,7 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
     @Override
     public void ShowControlEditOptions() {
         this.runOnUiThread(()->{
-            Log.i("SCREEN",String.format("%f",screenWidth));
+            Log.i("SCREEN",String.format("Screen Info: %f px %f px",screenWidth,screenHeight));
             ObjectAnimator animation = ObjectAnimator.ofFloat(EditOptionLayout, "translationX", 0f);
             animation.setDuration(500);
             animation.start();

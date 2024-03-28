@@ -7,8 +7,10 @@ import android.util.Log;
 
 public abstract class ControlComponent {
     public ControlComponent(){}
-    public ControlComponent(int idxX, int idxY,int pixelsPerStep,int pipeId){
+    public ControlComponent(int idxX, int idxY,int width,int height,int pixelsPerStep,int pipeId){
         this.pixelsPerStep = pixelsPerStep;
+        this.widthSteps = width;
+        this.heightSteps = height;
         pipeID = pipeId;
         SetDatums(idxX,idxY);
     }
@@ -30,15 +32,13 @@ public abstract class ControlComponent {
     public int pixelsPerStep;
     public int clearCount=0;
     public boolean colliding = false;
-    public boolean dragging,locked;
     public abstract void Draw(Canvas canvas, Paint bgPaintObject);
     public void MoveCentre(int gridW, int gridH){
         positionX = (gridW-widthSteps)/2;
         positionY = (gridH-heightSteps)/2;
-        screenCentrePosX = (float)((positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f);
-        screenCentrePosY = (float)((positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f);
+        screenCentrePosX = (positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f;
+        screenCentrePosY = (positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f;
         updateDrawSpace();
-        Log.i("THUMB",String.format("%d %d %f %f c Pixel point",positionX,positionY,screenCentrePosX,screenCentrePosY));
     }
 
     private void updateDrawSpace(){
@@ -48,6 +48,8 @@ public abstract class ControlComponent {
         drawSpace.right = drawSpace.left + widthSteps*pixelsPerStep+2;
         drawSpace.top = positionY*pixelsPerStep-2;
         drawSpace.bottom = drawSpace.top + heightSteps*pixelsPerStep+2;
+        Log.i("THUMB",String.format("%d %d %f %f %d Pixel point",positionX,positionY,screenCentrePosX,screenCentrePosY,pixelsPerStep));
+
     }
 
 }

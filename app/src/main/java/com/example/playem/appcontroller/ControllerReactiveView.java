@@ -14,13 +14,12 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
-import com.example.playem.ControllerActivity;
+import com.example.playem.AppGattService;
 import com.example.playem.appcontroller.VirtualControls.MandatoryButton;
 import com.example.playem.appcontroller.VirtualControls.SimpleButton;
 import com.example.playem.appcontroller.VirtualControls.ThumbStick;
 import com.example.playem.appcontroller.VirtualControls.VirtualControlTemplates;
 import com.example.playem.appcontroller.interfaces.Buildable;
-import com.example.playem.AppGattService;
 import com.example.playem.appcontroller.interfaces.BuildableViewCallbacks;
 import com.example.playem.appsettings.ControlsData;
 import com.example.playem.appsettings.GridData;
@@ -64,7 +63,7 @@ public class ControllerReactiveView extends SurfaceView {
     private final Paint colliderStroke = new Paint();
     private final Paint collisionBg = new Paint();
     private SurfaceHolder surfaceHolder;
-    private long lasttime=0;
+    //private long lasttime=0;
     @SuppressLint({"DefaultLocale", "ClickableViewAccessibility"})
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -115,7 +114,7 @@ public class ControllerReactiveView extends SurfaceView {
                     //Log.i("COLL","Colliding");
                     bb.GetComponent().Draw(screenC,collisionBg);
                 }
-                Log.e("COLLIDER","ColliderStroke");
+                //Log.e("COLLIDER","ColliderStroke");
                 bb.DrawColliderBox(screenC,colliderStroke,2);
             }
             //screenC.drawText(String.format("%d ms",time-lasttime),150,150,defPaint);
@@ -132,20 +131,20 @@ public class ControllerReactiveView extends SurfaceView {
     }
     public void AddComponent(VirtualControlTemplates type){
         int[] screenInfo = controlGrid.GetGridInfo();
-        AddComponent(type,0,0,screenInfo[2],0,true);
+        AddComponent(type,0,0,-1,-1,screenInfo[2],0,true);
     }
-    public void AddComponent(VirtualControlTemplates type,int idxX,int idxY,int pixelsPerStep,int pipeId,boolean firstBuild){
+    public void AddComponent(VirtualControlTemplates type,int idxX,int idxY,int width,int height,int pixelsPerStep,int pipeId,boolean firstBuild){
         switch(type){
             case THUMSTICK:
-                ThumbStick ts = new ThumbStick(idxX,idxY,pixelsPerStep,pipeId);
+                ThumbStick ts = new ThumbStick(idxX,idxY,width,height,pixelsPerStep,pipeId);
                 controlGrid.AddBuildableComponent(ts,ts,firstBuild);
                 break;
             case SBUTTON:
-                SimpleButton sb = new SimpleButton(idxX,idxY,pixelsPerStep,pipeId);
+                SimpleButton sb = new SimpleButton(idxX,idxY,width,height,pixelsPerStep,pipeId);
                 controlGrid.AddBuildableComponent(sb,sb,firstBuild);
                 break;
             case MANDATORY:
-                MandatoryButton mb = new MandatoryButton(idxX,idxY,pixelsPerStep,buildableViewCallbacks);
+                MandatoryButton mb = new MandatoryButton(idxX,idxY,width,height,pixelsPerStep,buildableViewCallbacks);
                 controlGrid.AddBuildableComponent(mb,mb,firstBuild);
                 break;
         }
@@ -172,7 +171,7 @@ public class ControllerReactiveView extends SurfaceView {
         controlGrid.building = false;
     }
 
-    private SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
+    private final SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             surfaceHolder = holder;
@@ -234,7 +233,7 @@ public class ControllerReactiveView extends SurfaceView {
         thisView.controlGrid.building = true;
         int[] grid_info = thisView.controlGrid.GetGridInfo();
         for(ControlsData cd: pd.controlsList){
-            thisView.AddComponent(VirtualControlTemplates.valueOf(cd.virtualControlType),cd.idxX,cd.idxY,grid_info[2],cd.pipeId,false);
+            thisView.AddComponent(VirtualControlTemplates.valueOf(cd.virtualControlType),cd.idxX,cd.idxY,cd.widthSteps, cd.heightSteps, grid_info[2],cd.pipeId,false);
             thisView.FinishEdits();
         }
         thisView.drawForBuild();

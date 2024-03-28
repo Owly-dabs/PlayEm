@@ -1,4 +1,4 @@
-package com.example.playem.bluetoothLE.blehandlers.interfaces;
+package com.example.playem.generics;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -20,5 +20,5 @@ public class ConcurrentTransferBuffer {
         transferQueue.add(data);
     }
 
-    private ConcurrentLinkedQueue<byte[]> transferQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<byte[]> transferQueue = new ConcurrentLinkedQueue<>();
 }
