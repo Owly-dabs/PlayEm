@@ -7,15 +7,15 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 
 import com.example.playem.bluetoothLE.blehandlers.interfaces.BLECharacteristicsReadRequest;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 public class HIDReportCReadRequest implements BLECharacteristicsReadRequest {
-    public HIDReportCReadRequest(byte[] emptyResponse, PlayEmDataPipe hidReportRef){
+    public HIDReportCReadRequest(byte[] emptyResponse, HidBleDataPipe hidReportRef){
         EmptyResponse = emptyResponse;
         this.HidReportRef = hidReportRef;
     }
     private final byte[] EmptyResponse;
-    public final PlayEmDataPipe HidReportRef;
+    public final HidBleDataPipe HidReportRef;
     @Override
     public Runnable onCharacteristicReadRequest(BluetoothGattServer gattServer, BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, int offset) {
         return new Runnable(){

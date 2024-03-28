@@ -7,13 +7,13 @@ import android.bluetooth.BluetoothGattServer;
 import android.os.Build;
 
 import com.example.playem.bluetoothLE.blehandlers.interfaces.BLETimedNotification;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 import java.util.TimerTask;
 
 public class HIDReportNotifier implements BLETimedNotification {
     @Override
-    public TimerTask onTimedNotifyCharacteristics(BluetoothGattServer gattServer, BluetoothDevice device, BluetoothGattCharacteristic characteristic, PlayEmDataPipe dataqueue) {
+    public TimerTask onTimedNotifyCharacteristics(BluetoothGattServer gattServer, BluetoothDevice device, BluetoothGattCharacteristic characteristic, HidBleDataPipe dataqueue) {
         return new TimerTask() {
                     @SuppressLint("MissingPermission")
                     @Override
