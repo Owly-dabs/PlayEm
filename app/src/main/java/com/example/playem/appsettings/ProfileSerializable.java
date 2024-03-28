@@ -9,7 +9,6 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,26 +16,27 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public interface ProfileSerializable {
-    static final String ProfilesDir = "Profiles";
-    static final String Settings = "AppSettings";
+    String ProfilesDir = "Profiles";
+    String Settings = "AppSettings";
     static boolean SaveProfile(Context context, @NonNull List<ControlsData> controlsData, @NonNull GridData gridData, @NonNull String name){
         Gson gb = new Gson();
         File directory = new File(context.getFilesDir(),ProfilesDir);
-        directory.mkdirs();
-        File file = new File(directory, name);
-        ProfileData pd = new ProfileData(name,controlsData,gridData);
-        pd.controlsList = controlsData;
-        pd.gridData = gridData;
+        if(directory.mkdirs()) {
+            File file = new File(directory, name);
+            ProfileData pd = new ProfileData(name,controlsData,gridData);
+            pd.controlsList = controlsData;
+            pd.gridData = gridData;
 
-        try (FileOutputStream fos = new FileOutputStream(file,false)) {
-            fos.write(gb.toJson(pd).getBytes(StandardCharsets.UTF_8));
-        }catch(IOException e){
-            Log.e("FILE","READ ERROR\n"+e.toString());
+            try (FileOutputStream fos = new FileOutputStream(file,false)) {
+                fos.write(gb.toJson(pd).getBytes(StandardCharsets.UTF_8));
+            }catch(IOException e){
+                Log.e("FILE","READ ERROR\n"+ e);
+            }
+            return true;
         }
-        return true;
+        return false;
     }
     static List<String> GetProfiles(Context context){
         String dir = context.getFilesDir().getPath()+"/"+ProfilesDir;

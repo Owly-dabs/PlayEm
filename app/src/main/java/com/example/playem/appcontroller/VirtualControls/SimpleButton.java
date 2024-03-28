@@ -87,8 +87,8 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
     @Override
     public void MoveAndUpdateDrawSpace(int datumX, int datumY) {
         SetDatums(datumX,datumY);
-        screenCentrePosX = (float)((positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f);
-        screenCentrePosY = (float)((positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f);
+        screenCentrePosX = (positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f;
+        screenCentrePosY = (positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f;
     }
 
     @Override

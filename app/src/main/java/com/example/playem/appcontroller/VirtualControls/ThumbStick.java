@@ -100,8 +100,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         lastValuePack[0].x = Math.min((int)(((relX-drawSpace.left)/maxlen)*65535),65535);
         lastValuePack[0].y = Math.min((int)(((relY-drawSpace.top)/maxlen)*65535),65535);
         if(dataPipe!=null){
-            dataPipe.UpdateAxis(reportID,(int)lastValuePack[0].x);
-            dataPipe.UpdateAxis(reportID+1,(int)lastValuePack[0].y);
+            dataPipe.UpdateAxis(reportID, lastValuePack[0].x);
+            dataPipe.UpdateAxis(reportID+1, lastValuePack[0].y);
         }
         return lastValuePack;
     }

@@ -76,7 +76,8 @@
             android:name=".ControllerActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/PlayEm.NoActionBar" />
+            android:theme="@style/PlayEm.NoActionBar"
+            tools:ignore="DiscouragedApi" />
 
         <service
             android:name=".AppGattService"

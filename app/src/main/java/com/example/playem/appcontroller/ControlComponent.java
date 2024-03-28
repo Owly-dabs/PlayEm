@@ -32,13 +32,12 @@ public abstract class ControlComponent {
     public int pixelsPerStep;
     public int clearCount=0;
     public boolean colliding = false;
-    public boolean dragging,locked;
     public abstract void Draw(Canvas canvas, Paint bgPaintObject);
     public void MoveCentre(int gridW, int gridH){
         positionX = (gridW-widthSteps)/2;
         positionY = (gridH-heightSteps)/2;
-        screenCentrePosX = (float)((positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f);
-        screenCentrePosY = (float)((positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f);
+        screenCentrePosX = (positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f;
+        screenCentrePosY = (positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f;
         updateDrawSpace();
     }
 

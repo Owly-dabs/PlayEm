@@ -26,11 +26,9 @@ import com.example.playem.bluetoothLE.BtManager;
 import com.example.playem.bluetoothLE.utils.PermissionHandler;
 import com.example.playem.generics.ServiceHandler;
 import com.example.playem.hid.HIDProfileBuilder;
-import com.example.playem.hid.interfaces.HIDChunk;
 import com.example.playem.pipes.HidBleDataPipe;
 import com.example.playem.viewmodels.GattServiceState;
 
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -109,14 +107,11 @@ public class AppGattService extends Service{
         }
     }
     private BluetoothManager getBluetoothManager() {
-        BluetoothManager bm = (BluetoothManager) this.getSystemService(Context.BLUETOOTH_SERVICE);
-        return bm;
+        return (BluetoothManager) this.getSystemService(Context.BLUETOOTH_SERVICE);
     }
     public void StartAdvertisement(){
         if(_constructed){
-            executorPool.execute(()->{
-                btManager.AdvertiseHID();
-            });
+            executorPool.execute(()-> btManager.AdvertiseHID());
         }
     }
     protected void StartInput(String address){
@@ -126,9 +121,7 @@ public class AppGattService extends Service{
             return;
         }
         if(_constructed){
-            executorPool.execute(()->{
-                btManager.attachNotifier(address);
-            });
+            executorPool.execute(()-> btManager.attachNotifier(address));
         }
     }
     protected void Disconnect(){

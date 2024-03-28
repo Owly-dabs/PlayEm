@@ -14,13 +14,12 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
-import com.example.playem.ControllerActivity;
+import com.example.playem.AppGattService;
 import com.example.playem.appcontroller.VirtualControls.MandatoryButton;
 import com.example.playem.appcontroller.VirtualControls.SimpleButton;
 import com.example.playem.appcontroller.VirtualControls.ThumbStick;
 import com.example.playem.appcontroller.VirtualControls.VirtualControlTemplates;
 import com.example.playem.appcontroller.interfaces.Buildable;
-import com.example.playem.AppGattService;
 import com.example.playem.appcontroller.interfaces.BuildableViewCallbacks;
 import com.example.playem.appsettings.ControlsData;
 import com.example.playem.appsettings.GridData;
@@ -172,7 +171,7 @@ public class ControllerReactiveView extends SurfaceView {
         controlGrid.building = false;
     }
 
-    private SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
+    private final SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             surfaceHolder = holder;

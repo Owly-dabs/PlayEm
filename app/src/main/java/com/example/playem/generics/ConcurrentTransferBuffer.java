@@ -20,5 +20,5 @@ public class ConcurrentTransferBuffer {
         transferQueue.add(data);
     }
 
-    private ConcurrentLinkedQueue<byte[]> transferQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<byte[]> transferQueue = new ConcurrentLinkedQueue<>();
 }
