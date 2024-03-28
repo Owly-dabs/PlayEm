@@ -1,6 +1,8 @@
 package com.example.playem;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -121,11 +123,11 @@ public class MainActivity extends AppCompatActivity{
         bondState.setText(sbondState);
         bondList.setText(sbondables);
 
-        if(statusLvl==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal() && satTest ==null){
+        /*if(statusLvl==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal() && satTest ==null){
             satTest = new Timer();
             stest = new saturationTest();
             satTest.scheduleAtFixedRate(stest.runTest(gattService.GetPipe(),1, 0.75,15,1000),1000,15);
-        }
+        }*/
     }
     private Timer satTest;
     private saturationTest stest;
@@ -156,9 +158,8 @@ public class MainActivity extends AppCompatActivity{
     }
     @Override
     protected void onDestroy(){
+        stopService(new Intent(this,AppGattService.class));
         super.onDestroy();
-        if(isBound)
-            gattService.UnsubscribeFromEventBus(this);
         Log.i("APP","onDestroy entered");
     }
 

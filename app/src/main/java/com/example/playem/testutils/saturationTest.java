@@ -2,7 +2,7 @@ package com.example.playem.testutils;
 
 import android.util.Log;
 
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 import java.util.TimerTask;
 
@@ -12,9 +12,9 @@ public class saturationTest {
     double angle = 0.0;
     double radiusJoy = 0.5;
     int nButton, idxbutton =0;
-    PlayEmDataPipe dataPipe;
+    HidBleDataPipe dataPipe;
     double t = 0;
-        public TimerTask runTest(PlayEmDataPipe _dataPipe, double radps, double radiusRatio, int updateMillis, int millisPerbutton){
+        public TimerTask runTest(HidBleDataPipe _dataPipe, double radps, double radiusRatio, int updateMillis, int millisPerbutton){
             radiusJoy  = radiusRatio>1?1:radiusRatio;
             this.dataPipe = _dataPipe;
             nButton = 8;

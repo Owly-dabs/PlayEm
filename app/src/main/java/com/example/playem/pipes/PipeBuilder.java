@@ -9,7 +9,7 @@ import com.example.playem.hid.HIDProfileBuilder;
 import java.util.List;
 
 public class PipeBuilder {
-    public PlayEmDataPipe BuildPipe(List<Buildable> componentList, AppGattService currentServiceInstance){
+    public HidBleDataPipe BuildPipe(List<Buildable> componentList, AppGattService currentServiceInstance){
         HIDProfileBuilder builderObject = new HIDProfileBuilder();
         if(componentList!=null && currentServiceInstance!=null){
             int axesC = 0;
@@ -29,6 +29,7 @@ public class PipeBuilder {
                         butC++;
                         break;
                 }
+                bb.NewBuildState(false);
             }
             builderObject.StartJoyStick();
             try{
@@ -39,13 +40,15 @@ public class PipeBuilder {
             }
             builderObject.EndJoyStick();
             builderObject.Build();
-            PlayEmDataPipe pipe = new PlayEmDataPipe(builderObject.GetChunks());
+            HidBleDataPipe pipe = new HidBleDataPipe(builderObject.GetChunks());
             currentServiceInstance.BuildPipe(builderObject,pipe);
             for(Buildable bb:componentList){
                 bb.onSetDataPipe(pipe);
             }
             return pipe;
             //currentServiceInstance.StartAdvertisement();
+        }else{
+            Log.e("BUILDER","Component List or service was empty");
         }
         return null;
     }
