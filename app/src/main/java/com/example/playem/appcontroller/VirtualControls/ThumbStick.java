@@ -12,7 +12,7 @@ import com.example.playem.appcontroller.ControlComponent;
 import com.example.playem.appcontroller.ControlHandler;
 import com.example.playem.appcontroller.interfaces.Buildable;
 import com.example.playem.hid.interfaces.ChunkType;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 public class ThumbStick extends ControlComponent implements ControlHandler , Buildable {
     public ThumbStick(){
@@ -34,6 +34,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         lastValuePack[0].y = idxY;
         lastValuePack[0].id = pipeid;
         this.handler = this;
+        if(idxX>-1&&idxY>-1) //TODO This is a bug fix for serialization
+            this.MoveAndUpdateDrawSpace(idxX,idxY);
     }
 
     private final int minstep = 2;
@@ -60,12 +62,14 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         float underdrawX = Math.min(Math.max(pointyX,drawSpace.left+radius),drawSpace.right-radius);
         float underdrawY = Math.min(Math.max(pointyY,drawSpace.top+radius),drawSpace.bottom-radius);
         canvas.drawCircle(underdrawX,underdrawY,radius,pointyPobj);
-        Paint p = new Paint();
-        p.setTextSize(30);
-        p.setColor(Color.WHITE);
-        canvas.drawRect(drawSpace.left,drawSpace.top,drawSpace.right,drawSpace.top+50,bgPaintObject);
-        String details = String.format("%d %d",lastValuePack[0].x,lastValuePack[0].y);
-        canvas.drawText(details,drawSpace.left,drawSpace.top+50,p);
+        if(building) {
+            Paint p = new Paint();
+            p.setTextSize(30);
+            p.setColor(Color.WHITE);
+            canvas.drawRect(drawSpace.left, drawSpace.top, drawSpace.right, drawSpace.top + 50, bgPaintObject);
+            String details = String.format("%d %d", lastValuePack[0].x, lastValuePack[0].y);
+            canvas.drawText(details, drawSpace.left, drawSpace.top + 50, p);
+        }
     }
 
     private ValuePack[] lastValuePack;
@@ -95,8 +99,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
         pointyY = relY;
         pointyX = relX;
         //Log.i("THUMB",String.format("onMove Draw Point %f %f",pointyX,pointyY));
-        lastValuePack[0].x = (int)(((relX-drawSpace.left)/maxlen)*65535);
-        lastValuePack[0].y = (int)(((relY-drawSpace.top)/maxlen)*65535);
+        lastValuePack[0].x = Math.min((int)(((relX-drawSpace.left)/maxlen)*65535),65535);
+        lastValuePack[0].y = Math.min((int)(((relY-drawSpace.top)/maxlen)*65535),65535);
         if(dataPipe!=null){
             dataPipe.UpdateAxis(reportID,(int)lastValuePack[0].x);
             dataPipe.UpdateAxis(reportID+1,(int)lastValuePack[0].y);
@@ -132,7 +136,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
 
     @Override
     public void DrawColliderBox(Canvas screen, Paint colliderColor,int stroke_width) {
-        Rect r = new Rect(drawSpace.left+stroke_width,drawSpace.top+stroke_width,drawSpace.right-stroke_width,drawSpace.bottom+stroke_width);
+        stroke_width*=7;
+        Rect r = new Rect(drawSpace.left+stroke_width,drawSpace.top+stroke_width,drawSpace.right-stroke_width,drawSpace.bottom-stroke_width);
         screen.drawRect(r,colliderColor);
     }
 
@@ -147,13 +152,18 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
     }
 
     @Override
+    public VirtualControlTemplates GetVirtualControlType() {
+        return VirtualControlTemplates.THUMSTICK;
+    }
+
+    @Override
     public void onInputReportPipeID(int reportID) {
         this.reportID = reportID;
     }
     private int reportID=-1;
     @Override
-    public void onSetDataPipe(PlayEmDataPipe dataPipe) {
+    public void onSetDataPipe(HidBleDataPipe dataPipe) {
         this.dataPipe = dataPipe;
     }
-    private PlayEmDataPipe dataPipe;
+    private HidBleDataPipe dataPipe;
 }

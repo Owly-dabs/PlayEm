@@ -14,11 +14,14 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
+import com.example.playem.ControllerActivity;
+import com.example.playem.appcontroller.VirtualControls.MandatoryButton;
 import com.example.playem.appcontroller.VirtualControls.SimpleButton;
 import com.example.playem.appcontroller.VirtualControls.ThumbStick;
 import com.example.playem.appcontroller.VirtualControls.VirtualControlTemplates;
 import com.example.playem.appcontroller.interfaces.Buildable;
 import com.example.playem.AppGattService;
+import com.example.playem.appcontroller.interfaces.BuildableViewCallbacks;
 import com.example.playem.appsettings.ControlsData;
 import com.example.playem.appsettings.GridData;
 import com.example.playem.appsettings.ProfileData;
@@ -28,6 +31,8 @@ import com.example.playem.pipes.PipeBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,14 +41,17 @@ public class ControllerReactiveView extends SurfaceView {
     private final ControlGrid controlGrid;
     private final ExecutorService drawThread;
     private final Rect screenBounds;
-    public ControllerReactiveView(Context context, ControlGrid controlGrid,Rect screenBounds) {
+    private final BuildableViewCallbacks buildableViewCallbacks;
+    public ControllerReactiveView(Context context, ControlGrid controlGrid, Rect screenBounds, BuildableViewCallbacks buildableViewCallbacks) {
         super(context);
-        this.getHolder().addCallback(this.surfaceViewCallback);
-        this.getHolder().setFormat(PixelFormat.RGBA_8888);
+        this.buildableViewCallbacks = buildableViewCallbacks;
+        getHolder().addCallback(ControllerReactiveView.this.surfaceViewCallback);
+        getHolder().setFormat(PixelFormat.RGBA_8888);
         setZOrderOnTop(false);
         this.controlGrid = controlGrid;
         drawThread = Executors.newSingleThreadExecutor();
         defPaint.setColor(Color.BLACK);
+        defPaint.setAlpha(255);
         colliderStroke.setColor(Color.CYAN);
         colliderStroke.setAlpha(70);
         colliderStroke.setStrokeWidth(5f);
@@ -93,7 +101,6 @@ public class ControllerReactiveView extends SurfaceView {
         surfaceHolder.unlockCanvasAndPost(screenC);
     }
     private void drawForBuild(){
-
         //long time = System.currentTimeMillis();
         Queue<Rect> toClear = controlGrid.GetClearCalls();
         List<Buildable> builables = controlGrid.GetComponentList();
@@ -108,25 +115,38 @@ public class ControllerReactiveView extends SurfaceView {
                     //Log.i("COLL","Colliding");
                     bb.GetComponent().Draw(screenC,collisionBg);
                 }
-                bb.DrawColliderBox(screenC,colliderStroke,5/2);
+                Log.e("COLLIDER","ColliderStroke");
+                bb.DrawColliderBox(screenC,colliderStroke,2);
             }
             //screenC.drawText(String.format("%d ms",time-lasttime),150,150,defPaint);
             //lasttime = time;
             surfaceHolder.unlockCanvasAndPost(screenC);
+        }else{
+            Log.e("DRAW","Buildables are empty");
         }
     }
-
+    private void drawCleared(){
+        Canvas screenC = surfaceHolder.lockHardwareCanvas();
+        screenC.drawRect(screenBounds,defPaint);
+        surfaceHolder.unlockCanvasAndPost(screenC);
+    }
     public void AddComponent(VirtualControlTemplates type){
         int[] screenInfo = controlGrid.GetGridInfo();
-
+        AddComponent(type,0,0,screenInfo[2],0,true);
+    }
+    public void AddComponent(VirtualControlTemplates type,int idxX,int idxY,int pixelsPerStep,int pipeId,boolean firstBuild){
         switch(type){
             case THUMSTICK:
-                ThumbStick ts = new ThumbStick(0,0,screenInfo[2],0);
-                controlGrid.AddBuildableComponent(ts,ts,true);
+                ThumbStick ts = new ThumbStick(idxX,idxY,pixelsPerStep,pipeId);
+                controlGrid.AddBuildableComponent(ts,ts,firstBuild);
                 break;
             case SBUTTON:
-                SimpleButton sb = new SimpleButton(0,0,screenInfo[2],0);
-                controlGrid.AddBuildableComponent(sb,sb,true);
+                SimpleButton sb = new SimpleButton(idxX,idxY,pixelsPerStep,pipeId);
+                controlGrid.AddBuildableComponent(sb,sb,firstBuild);
+                break;
+            case MANDATORY:
+                MandatoryButton mb = new MandatoryButton(idxX,idxY,pixelsPerStep,buildableViewCallbacks);
+                controlGrid.AddBuildableComponent(mb,mb,firstBuild);
                 break;
         }
         drawThread.execute(this::drawForBuild);
@@ -152,10 +172,19 @@ public class ControllerReactiveView extends SurfaceView {
         controlGrid.building = false;
     }
 
-    private final SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
+    private SurfaceHolder.Callback surfaceViewCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             surfaceHolder = holder;
+            Timer t = new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    buildableViewCallbacks.HideAllOptions();
+                }
+            },5000);
+
+            AddComponent(VirtualControlTemplates.MANDATORY);
         }
         @Override
         public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
@@ -163,7 +192,7 @@ public class ControllerReactiveView extends SurfaceView {
         }
         @Override
         public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-            holder.removeCallback(this);
+            holder.removeCallback(ControllerReactiveView.this.surfaceViewCallback);
             surfaceHolder=null;
         }
     };
@@ -180,11 +209,39 @@ public class ControllerReactiveView extends SurfaceView {
                 for(String fn : ProfileSerializable.GetProfiles(this.getContext())){
                     Log.i("FILEREAD",fn);
                 }
-                ProfileData pd= (ProfileData)(ProfileSerializable.GetObjectFromFile(this.getContext(), ProfileData.class,name));
-                if(pd!=null){
-                    Log.i("FILEREAD","Success");
+            }
+        }
+    }
+    public void LoadProfile(String name){
+        List<String> profiles = ProfileSerializable.GetProfiles(this.getContext());
+        if(profiles.contains(name)){
+            ProfileData pd= (ProfileData)(ProfileSerializable.GetObjectFromFile(this.getContext(), ProfileData.class,name));
+            if(pd!=null) {
+                Log.w("LOAD", pd.toString());
+                if(!AssembleFromProfile(this,pd)) {
+                    Log.e("LOAD", "Load profile failed!... Resetting to empty Grid");
+                    this.controlGrid.ResetControlGrid(SAFE_MINUNIT);
                 }
             }
         }
     }
+    static boolean AssembleFromProfile(ControllerReactiveView thisView, ProfileData pd){
+        thisView.buildableViewCallbacks.ShowMenuOptions();
+        thisView.drawCleared();
+        float[] current_screenInfo =thisView.controlGrid.GetScreenInfo();
+        float min_unit_len = current_screenInfo[0]/pd.gridData.screenWidth*pd.gridData.min_unit_len;
+        thisView.controlGrid.ResetControlGrid(min_unit_len);
+        thisView.controlGrid.building = true;
+        int[] grid_info = thisView.controlGrid.GetGridInfo();
+        for(ControlsData cd: pd.controlsList){
+            thisView.AddComponent(VirtualControlTemplates.valueOf(cd.virtualControlType),cd.idxX,cd.idxY,grid_info[2],cd.pipeId,false);
+            thisView.FinishEdits();
+        }
+        thisView.drawForBuild();
+        thisView.buildableViewCallbacks.HideAllOptions();
+        thisView.buildableViewCallbacks.ShowMenuOptions();
+        return true;
+    }
+
+    static float SAFE_MINUNIT = 0.25f;
 }

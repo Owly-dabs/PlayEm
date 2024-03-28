@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.example.playem.appcontroller.interfaces.Buildable;
 import com.example.playem.ControllerActivity;
 import com.example.playem.generics.ConcurrentListBackHashMap;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,7 +25,7 @@ public class ControlGrid {
     private float gridHeight,gridWidth;
     private final int gridPixelLength,gridPixelWidth;
     private final float screenActualHeight,screenActualWidth,density;
-    private final ControlComponent[][] grid;
+    private ControlComponent[][] grid;
     private final ControllerActivity parentActivity;
     private float min_unit_len;
     public ControlGrid(Activity activity, float min_physical_unit_len_inches,int orientation){ //
@@ -50,11 +50,11 @@ public class ControlGrid {
         screenActualWidth = (gridPixelWidth - cutoutRight - cutoutLeft) / density;
         screenActualHeight = (gridPixelLength - cutoutTop - cutoutBottom) / density;
 
-        gridWidth=orientation==ORIENTATION_POTRAIT? screenActualWidth : screenActualHeight;
-        gridHeight=orientation==ORIENTATION_POTRAIT? screenActualHeight : screenActualWidth;
+        //gridWidth=orientation==ORIENTATION_POTRAIT? screenActualWidth : screenActualHeight;
+        //gridHeight=orientation==ORIENTATION_POTRAIT? screenActualHeight : screenActualWidth;
         min_unit_len = min_physical_unit_len_inches;
-        gridWidth= gridWidth/min_physical_unit_len_inches;
-        gridHeight= gridHeight/min_physical_unit_len_inches;
+        gridWidth= screenActualWidth/min_physical_unit_len_inches;
+        gridHeight= screenActualHeight/min_physical_unit_len_inches;
 
         drawCalls = new ConcurrentLinkedQueue<>();
         clearCalls = new ConcurrentLinkedQueue<>();
@@ -70,11 +70,11 @@ public class ControlGrid {
     private final ConcurrentListBackHashMap<Integer,Buildable> MasterComponentList = new ConcurrentListBackHashMap<>();
     private final ConcurrentLinkedQueue<ControlComponent> drawCalls;
     private final ConcurrentLinkedQueue<Rect> clearCalls;
-    private PlayEmDataPipe dataPipe;
+    private HidBleDataPipe dataPipe;
     private ControlComponent getControlHandler(float x, float y){
 
-        int arrXidx = (int)Math.min((x/gridPixelWidth*gridWidth),gridWidth);
-        int arrYidx = (int)Math.min((y/gridPixelLength*gridHeight),gridHeight);
+        int arrXidx = (int)Math.min((x/gridPixelWidth*gridWidth),gridWidth-1);
+        int arrYidx = (int)Math.min((y/gridPixelLength*gridHeight),gridHeight-1);
         //Log.i("COLL",String.format("%f %f %d %d",x,y,arrXidx,arrYidx));
         //Log.w("CTLGRID",String.format("%d x %d y",arrXidx,arrYidx));
         return grid[arrXidx][arrYidx];
@@ -85,33 +85,13 @@ public class ControlGrid {
     public Queue<Rect> GetClearCalls(){
         return clearCalls;
     }
-    public void SetPipe(PlayEmDataPipe dataPipe){
+    public void SetPipe(HidBleDataPipe dataPipe){
         this.dataPipe = dataPipe;
     }
     private boolean pipeFramePush = false;
     private void handlePack(ControlHandler.ValuePack[] pack){
-        /*if(dataPipe!=null){
-            pipeFramePush = true;
-            switch(pack[0].type){
-                case AXES:
-                    dataPipe.UpdateAxis(pack[0].id,pack[0].x);
-                    break;
-                case AXES2:
-                    dataPipe.UpdateAxis(pack[0].id,pack[0].x);
-                    dataPipe.UpdateAxis(pack[0].id+1,pack[0].y);
-                    break;
-                case BUTTONS:
-                    dataPipe.UpdateButtonNumber(pack[0].id,pack[0].x>0);
-                    break;
-                default:
-                    pipeFramePush = false||pipeFramePush;
-                    break;
-            }
-        }else{
-            Log.e("PIPE","Pipe is Null!");
-        }*/
+        //Not Used
     }
-
     public void newPointer(MotionEvent event,int id,int idx){
         /*if(ActivePointers.ContainsKey(id)){
             Log.e("CONTROL","UP or CANCEL event not registered, DOWN received with active pointer in cache");
@@ -329,6 +309,37 @@ public class ControlGrid {
                 //Log.i("GRID",String.format("%d %d",i,j));
             }
         }
+    }
+    private void ClearGrid(){
+        Log.w("GRIDCALC",String.format("%f %f",gridWidth,gridHeight));
+        for(int i = 0;i<(int)gridWidth;i++){
+            for(int j = 0;j<(int)gridHeight;j++){
+                grid[i][j] = null;
+                //Log.w("GRID","Grid commanded to clear");
+            }
+        }
+    }
+    private void ClearBuffers(){
+        MasterComponentList.Clear();
+        ActivePointers.Clear();
+        drawCalls.clear();
+        clearCalls.clear();
+    }
+    public void FlushGridAndBuffers(){
+        ClearBuffers();
+        ClearGrid();
+        uniqueComponent=0;
+        focusedBuilding = null;
+        focusedComponent = null;
+        dataPipe = null;
+    }
+    public void ResetControlGrid(float min_unit_len){
+        Log.w("GRIDCALC",String.format("%f %f %f",gridWidth,gridHeight,min_unit_len));
+        FlushGridAndBuffers();
+        gridWidth = (screenActualWidth/min_unit_len);
+        gridHeight = screenActualHeight/min_unit_len;
+        this.min_unit_len = min_unit_len;
+        grid = new ControlComponent[(int)gridWidth][(int)gridHeight];
     }
     private int uniqueComponent=0;
     public void RemoveComponentInFocus(){

@@ -6,12 +6,12 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.example.playem.bluetoothLE.utils.PermissionHandle;
+import com.example.playem.bluetoothLE.utils.PermissionHandler;
 import com.example.playem.generics.PermissionHandlerDelegate;
 import com.example.playem.generics.PermissionsHandle;
-import com.example.playem.generics.PermissionsHandler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
@@ -19,7 +19,7 @@ public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
 
     public boolean CheckBTPermissions(){
         if(focusedActivity!=null){
-            BTPermissionHandler permissionHandler = new BTPermissionHandler("PlayEm BT Manager", btPermissionsHandles);
+            PermissionHandler permissionHandler = new PermissionHandler(focusedActivity,"", btPermissionsHandles,this);
             if(!permissionHandler.CheckAllPermissions(focusedActivity)) {
                 permissionHandler.RequestMissingPermissions(focusedActivity);
             }
@@ -27,12 +27,12 @@ public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
         }
         return false;
     }
-    private static final PermissionsHandle[] btPermissionsHandles = new PermissionsHandle[]{
-            new BTPermissionHandle(android.Manifest.permission.BLUETOOTH_CONNECT),
-            new BTPermissionHandle(android.Manifest.permission.BLUETOOTH_SCAN),
-            new BTPermissionHandle(android.Manifest.permission.BLUETOOTH_ADVERTISE),
-            new BTPermissionHandle(android.Manifest.permission.ACCESS_COARSE_LOCATION),
-            new BTPermissionHandle(Manifest.permission.ACCESS_FINE_LOCATION),
+    private final PermissionsHandle[] btPermissionsHandles = new PermissionsHandle[]{
+            new PermissionHandle(android.Manifest.permission.BLUETOOTH_CONNECT),
+            new PermissionHandle(android.Manifest.permission.BLUETOOTH_SCAN),
+            new PermissionHandle(android.Manifest.permission.BLUETOOTH_ADVERTISE),
+            new PermissionHandle(android.Manifest.permission.ACCESS_COARSE_LOCATION),
+            new PermissionHandle(Manifest.permission.ACCESS_FINE_LOCATION),
     };
 
     public void RegisterRequests(PermissionsHandle resolution) {
@@ -73,53 +73,6 @@ public class BluetoothPermissionsHandler implements PermissionHandlerDelegate {
     public void SetFocusedActivity(Activity activity) {
         focusedActivity = activity;
     }
-    protected  class BTPermissionHandler extends PermissionsHandler {
-        public BTPermissionHandler(String GroupName, PermissionsHandle[] Permissions_to_track) {
-            super(GroupName, Permissions_to_track);
-        }
-        @Override
-        protected void RequestMissingPermissions(Activity context) {
-            ArrayList<String> requires = new ArrayList<>();
-            for(PermissionsHandle s: btPermissionsHandles)
-            {
-                if(focusedActivity.checkSelfPermission(s.getPermission())!= PackageManager.PERMISSION_GRANTED){
-                    requires.add(s.getPermission());
-                    Log.w("PERM","Requiring:"+s);
-                    RegisterRequests(s);
-                }
-            }
-            if(!requires.isEmpty()){
-                String[] requiredPerm = new String[requires.size()];
-                requiredPerm= requires.toArray(requiredPerm);
-                context.requestPermissions(requiredPerm,2); //Could use request code for a hashed event system from activity
-                //this.requestPermissions(requiredPerm,11);
-            }
-        }
-    }
-    protected static class BTPermissionHandle implements PermissionsHandle{
-        protected BTPermissionHandle(String permission){
-            Permission = permission;
-        }
-        protected String Permission;
-        @Override
-        public void NotGranted() {
-            Log.e("PERM",Permission +" Not Granted!");
-        }
-        @Override
-        public void Granted() {
 
-        }
-        @Override
-        public String Rationale() {
-            return "null";
-        }
-        @NonNull
-        @Override
-        public String toString(){
-            return new String(Arrays.copyOf(Permission.toCharArray(),Permission.length()));
-        }
-        public String getPermission(){
-            return this.toString();
-        }
-    }
+
 }

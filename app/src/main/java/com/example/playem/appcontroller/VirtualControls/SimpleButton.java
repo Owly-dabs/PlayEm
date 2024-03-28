@@ -10,7 +10,7 @@ import com.example.playem.appcontroller.ControlComponent;
 import com.example.playem.appcontroller.ControlHandler;
 import com.example.playem.appcontroller.interfaces.Buildable;
 import com.example.playem.hid.interfaces.ChunkType;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 
 public class SimpleButton extends ControlComponent implements ControlHandler, Buildable {
     public SimpleButton(){
@@ -29,14 +29,14 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
         lastValuePack[0].relPixelX=0;
         this.handler = this;
     }
-    private final ValuePack[] lastValuePack= new ValuePack[1];
+    protected final ValuePack[] lastValuePack= new ValuePack[1];
     private boolean pressed = false;
     private float baseRadius = 1.0f;
     private float innerCircle = 0.5f;
     private float bandRatio = 0.3f;
-    private Paint outerRingPobj = new Paint();
-    private Paint innerPobj = new Paint();
-    private Paint innerPressedPobj = new Paint();
+    protected Paint outerRingPobj = new Paint();
+    protected Paint innerPobj = new Paint();
+    protected Paint innerPressedPobj = new Paint();
     private final int minStep = 1;
     private int reportID=-1;
     @Override
@@ -89,6 +89,8 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
     @Override
     public void MoveAndUpdateDrawSpace(int datumX, int datumY) {
         SetDatums(datumX,datumY);
+        screenCentrePosX = (float)((positionX*pixelsPerStep)+(float)(widthSteps*pixelsPerStep)/2.0f);
+        screenCentrePosY = (float)((positionY*pixelsPerStep)+(float)(heightSteps*pixelsPerStep)/2.0f);
     }
 
     @Override
@@ -97,7 +99,8 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
 
     @Override
     public void DrawColliderBox(Canvas screen, Paint colliderColor, int stroke_width) {
-        Rect r = new Rect(drawSpace.left+stroke_width,drawSpace.top+stroke_width,drawSpace.right-stroke_width,drawSpace.bottom+stroke_width);
+        stroke_width*=7;
+        Rect r = new Rect(drawSpace.left+stroke_width,drawSpace.top+stroke_width,drawSpace.right-stroke_width,drawSpace.bottom-stroke_width);
         screen.drawRect(r,colliderColor);
     }
 
@@ -112,13 +115,18 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
     }
 
     @Override
+    public VirtualControlTemplates GetVirtualControlType() {
+        return VirtualControlTemplates.SBUTTON;
+    }
+
+    @Override
     public void onInputReportPipeID(int reportID) {
         this.reportID = reportID;
     }
 
     @Override
-    public void onSetDataPipe(PlayEmDataPipe dataPipe) {
+    public void onSetDataPipe(HidBleDataPipe dataPipe) {
         this.dataPipe = dataPipe;
     }
-    private PlayEmDataPipe dataPipe;
+    private HidBleDataPipe dataPipe;
 }

@@ -44,10 +44,10 @@ public abstract class ControlComponent {
     private void updateDrawSpace(){
         if(drawSpace==null)
             drawSpace = new Rect();
-        drawSpace.left = positionX*pixelsPerStep;
-        drawSpace.right = drawSpace.left + widthSteps*pixelsPerStep;
-        drawSpace.top = positionY*pixelsPerStep;
-        drawSpace.bottom = drawSpace.top + heightSteps*pixelsPerStep;
+        drawSpace.left = positionX*pixelsPerStep-2;
+        drawSpace.right = drawSpace.left + widthSteps*pixelsPerStep+2;
+        drawSpace.top = positionY*pixelsPerStep-2;
+        drawSpace.bottom = drawSpace.top + heightSteps*pixelsPerStep+2;
     }
 
 }

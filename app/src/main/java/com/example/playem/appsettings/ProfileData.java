@@ -1,5 +1,9 @@
 package com.example.playem.appsettings;
 
+import android.annotation.SuppressLint;
+
+import androidx.annotation.NonNull;
+
 import java.util.List;
 
 public class ProfileData {
@@ -8,7 +12,20 @@ public class ProfileData {
         this.controlsList = controlsData;
         this.gridData = gridData;
     }
-    String name;
-    List<ControlsData> controlsList;
-    GridData gridData;
+    public String name;
+    public List<ControlsData> controlsList;
+    public GridData gridData;
+
+    @NonNull
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        for(ControlsData cd : controlsList){
+            sb.append("        ");
+            sb.append(cd.toString());
+            sb.append("\n");
+        }
+        return String.format("Title: %s\n    tControls: %d\n%sGrid:\n%s",name,controlsList.size(), sb,gridData.toString());
+    }
 }
