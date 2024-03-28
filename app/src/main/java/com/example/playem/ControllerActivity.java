@@ -155,6 +155,7 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
         DCButton.setOnClickListener((View v)->{
             disconnecting = true;
             gattService.Disconnect(true);
+            this.finish();
 
         });
         XButton.setOnClickListener((View v)->{
