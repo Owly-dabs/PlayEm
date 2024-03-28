@@ -22,7 +22,11 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
     public boolean ContainsKey(@NonNull K key){
         return internalHash.containsKey(key);
     }
-
+    public void Clear(){
+        internalHash.clear();
+        internalList.clear();
+        internalKeyList.clear();
+    }
     @Nullable
     public O Get(@NonNull K key){
         if(internalHash.containsKey(key)) {
