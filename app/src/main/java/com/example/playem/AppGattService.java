@@ -27,11 +27,14 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
 import com.example.playem.bluetoothLE.BluetoothPermissionsHandler;
-import com.example.playem.bluetoothLE.PlayEmBTManager;
+import com.example.playem.bluetoothLE.BtManager;
+import com.example.playem.bluetoothLE.utils.PermissionHandle;
+import com.example.playem.bluetoothLE.utils.PermissionHandler;
+import com.example.playem.generics.PermissionsHandle;
 import com.example.playem.generics.ServiceHandler;
 import com.example.playem.hid.HIDProfileBuilder;
 import com.example.playem.hid.interfaces.HIDChunk;
-import com.example.playem.pipes.PlayEmDataPipe;
+import com.example.playem.pipes.HidBleDataPipe;
 import com.example.playem.viewmodels.GattServiceState;
 
 import java.util.HashMap;
@@ -54,7 +57,7 @@ public class AppGattService extends Service{
                 dataChunks = new HashMap<>();
                 bluetoothAdapter =  bluetoothManager.getAdapter();
                 if(btManager == null){
-                    btManager = new PlayEmBTManager(this,executorPool,mediator,bluetoothManager);
+                    btManager = new BtManager(this,executorPool,mediator,bluetoothManager);
                 }
                 _constructed = true;
                 btPermissionHandler = new BluetoothPermissionsHandler();
@@ -64,7 +67,27 @@ public class AppGattService extends Service{
                 else
                     Log.e("PERM","Showing as no permissions granted");
                 checkBTEnabled();
-                bluetoothAdapter.setName("PlayEm_DEBUG");
+
+                String CHANNEL_ID = "playEM_channelID";
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                        "PlayEM Channel",
+                        NotificationManager.IMPORTANCE_DEFAULT);
+
+                ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setOngoing(true)
+                        .setContentTitle("PlayEm BLE")
+                        .setContentText("Bluetooth is Running in the Background").build();
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    PermissionHandler connectedDeviceHandler = new PermissionHandler(focusedActivity,"foreground",new PermissionsHandle[]{
+                            new PermissionHandle(Manifest.permission.POST_NOTIFICATIONS)
+                    },btPermissionHandler);
+                    connectedDeviceHandler.RequestMissingPermissions(focusedActivity);
+                }
+                int notificationID = 1;
+                this.startForeground(notificationID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+
                 mediator.onServiceStatusChanged(null);
             });
         }
@@ -86,17 +109,17 @@ public class AppGattService extends Service{
     private boolean _constructed = false;
     private ExecutorService executorPool;
     private final IBinder mbinder = new mBinder();
-    private PlayEmBTManager btManager;
-    public PlayEmDataPipe dataPipe;
+    private BtManager btManager;
+    public HidBleDataPipe dataPipe;
     private Activity focusedActivity;
     private HashMap<Integer, HIDChunk> dataChunks;
     private BroadcastReceiver bondStateReceiver;
 
     public void BuildPipe(HIDProfileBuilder builder){
         builder.Build();
-        BuildPipe(builder,new PlayEmDataPipe(builder.GetChunks()));
+        BuildPipe(builder,new HidBleDataPipe(builder.GetChunks()));
     }
-    public void BuildPipe(HIDProfileBuilder builder,PlayEmDataPipe dataPipe){
+    public void BuildPipe(HIDProfileBuilder builder, HidBleDataPipe dataPipe){
         if(_constructed){
             executorPool.execute(()->{
                 this.dataPipe = dataPipe;
@@ -109,7 +132,7 @@ public class AppGattService extends Service{
     private void checkBTEnabled() {
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            if (ActivityCompat.checkSelfPermission(focusedActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(focusedActivity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 focusedActivity.startActivityForResult(enableBtIntent, -1);//change api if time allows
             }
         }
@@ -146,7 +169,6 @@ public class AppGattService extends Service{
             if(_constructed){
                 btManager.StopAdvertisement();
                 btManager.Disconnect(forceBondRemoval);
-                btManager.Close();
                 _constructed = false;
                 dataPipe = null;
                 mediator.onGattStatusChanged(GattServiceState.SERVICE_STATUS.NOT_INIT);
@@ -155,15 +177,15 @@ public class AppGattService extends Service{
             }
         });
     }
-    public PlayEmDataPipe GetPipe(){
+    public HidBleDataPipe GetPipe(){
         if(dataPipe!=null){
             return  dataPipe;
         }
         return null;
     }
-    protected HashMap<Integer,HIDChunk> GetHidChunks(){
+    /*protected HashMap<Integer,HIDChunk> GetHidChunks(){
         return dataChunks;
-    }
+    }*/
     protected void SubscribeToEventBus(Activity activity,GattServiceCallbacks callbacks){
         activityGattServiceCallback.PutPair(activity,callbacks);
         if(btPermissionHandler!=null)
@@ -259,10 +281,12 @@ public class AppGattService extends Service{
                 if(currentState.status== GattServiceState.SERVICE_STATUS.DONT_TOUCHME){
                     currentState.status = GattServiceState.SERVICE_STATUS.CONNECTED_IDLE;
                 }else{
-                    currentState.status = GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST;}
+                    currentState.status = GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST;
                 }
+            }
             else{
-                currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;}
+                currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;
+            }
             this.onServiceStatusChanged(null);
             for(int i =0; i<activityGattServiceCallback.size();i++) {
                 Activity a = activityGattServiceCallback.GetK(i);
@@ -315,19 +339,9 @@ public class AppGattService extends Service{
     @Override
     public void onCreate(){
         super.onCreate();
-        String CHANNEL_ID = "playEM_channelID";
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                "PlayEM Channel",
-                NotificationManager.IMPORTANCE_DEFAULT);
 
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setOngoing(true)
-                .setContentTitle("PlayEm BLE")
-                .setContentText("Bluetooth is Running in the Background").build();
         //TODO Add buttons to disable or bring APP to foreground
-        int notificationID = 1;
-        this.startForeground(notificationID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+
     }
 
     @Override

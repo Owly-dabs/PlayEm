@@ -12,9 +12,9 @@ import android.util.Log;
 
 import java.util.List;
 
-public class PlayEmBondStateBroadcastReceiver extends BroadcastReceiver {
+public class BondStateBroadcastReceiver extends BroadcastReceiver {
     private final BluetoothGattServer gattServer;
-    public PlayEmBondStateBroadcastReceiver(BluetoothGattServer gattServer){
+    public BondStateBroadcastReceiver(BluetoothGattServer gattServer){
         this.gattServer = gattServer;
     }
     @Override
