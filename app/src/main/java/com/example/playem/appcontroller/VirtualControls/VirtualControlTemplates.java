@@ -4,6 +4,7 @@ public enum VirtualControlTemplates {
     THUMSTICK,
     SBUTTON,
     TBUTTON,
-    GYRO
+    GYRO,
+    MANDATORY
 
 }
