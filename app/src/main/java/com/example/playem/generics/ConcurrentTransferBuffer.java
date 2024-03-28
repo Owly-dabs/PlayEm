@@ -1,4 +1,4 @@
-package com.example.playem.bluetoothLE.blehandlers.interfaces;
+package com.example.playem.generics;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 

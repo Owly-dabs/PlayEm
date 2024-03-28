@@ -3,7 +3,6 @@ package com.example.playem.generics;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +26,7 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
         internalList.clear();
         internalKeyList.clear();
     }
+    /** @noinspection DataFlowIssue*/
     @Nullable
     public O Get(@NonNull K key){
         if(internalHash.containsKey(key)) {
@@ -37,24 +37,26 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
         }
         return null;
     }
+    /** @noinspection DataFlowIssue*/
     @Nullable
-    public synchronized O Remove(@NonNull K key){
-        if(internalHash.containsKey(key)){
+    public synchronized O Remove(@NonNull K key) {
+        O result = null;
+        if (internalHash.containsKey(key)) {
             int idx = internalHash.get(key);
             int len = internalList.size();
             O retval = internalList.get(idx);
-            internalList.set(idx,internalList.get(len-1));
-            internalKeyList.set(idx,internalKeyList.get(len-1));
-            K lastkey = internalKeyList.get(len-1);
-            internalHash.put(lastkey,idx);
-            internalList.remove(len-1);
-            internalKeyList.remove(len-1);
+            internalList.set(idx, internalList.get(len - 1));
+            internalKeyList.set(idx, internalKeyList.get(len - 1));
+            K lastkey = internalKeyList.get(len - 1);
+            internalHash.put(lastkey, idx);
+            internalList.remove(len - 1);
+            internalKeyList.remove(len - 1);
             internalHash.remove(key);
-            return retval;
-
+            result = retval;
         }
-        return null;
+        return result;
     }
+    /** @noinspection DataFlowIssue*/
     @NonNull
     public synchronized O AddorUpdate(@NonNull K key, @NonNull O val){
         if(internalHash.containsKey(key)){
@@ -86,12 +88,12 @@ public class ConcurrentListBackHashMap<K,O> implements Iterable<O> {
     }
     public class LinkBackHashMapIterator implements Iterator<O>{
         public LinkBackHashMapIterator(List<O>list){
-            this.len = len;
+            this.len = ConcurrentListBackHashMap.this.size();
             backinglist = list;
         }
         private final List<O> backinglist;
         private int counter=-1;
-        private int len = 0;
+        private int len;
         private boolean canRemove = false;
         @Override
         public boolean hasNext() {
