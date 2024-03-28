@@ -6,6 +6,7 @@ import static android.bluetooth.BluetoothDevice.BOND_NONE;
 import static android.bluetooth.BluetoothDevice.ERROR;
 import static android.bluetooth.BluetoothDevice.EXTRA_BOND_STATE;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -22,12 +23,16 @@ import android.bluetooth.le.AdvertisingSet;
 import android.bluetooth.le.AdvertisingSetCallback;
 import android.bluetooth.le.AdvertisingSetParameters;
 import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 
 import com.example.playem.AppGattService;
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
@@ -50,6 +55,7 @@ import com.example.playem.pipes.HidBleDataPipe;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Timer;
@@ -70,29 +76,30 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
         this.bluetoothManager = btManager;
         this.bluetoothAdapter = btManager.getAdapter();
     }
+
     private final Context serviceContext;
     private final GattServiceCallbacks promises;
-    private Function<BtManager,Void> StopAdvertiseHID;
 
     //private MainActivity parentMainActivity;
     public ConcurrentLinkedQueue<BluetoothDevice> bondedDevices = new ConcurrentLinkedQueue<>();
     //public ConcurrentLinkedQueue<BluetoothDevice> availDevices = new ConcurrentLinkedQueue<>();
     public ConcurrentLinkedQueue<BluetoothDevice> connectedDevice = new ConcurrentLinkedQueue<>();
+    private AdvertisingSetCallback advertiseCallback;
 
     @SuppressLint("MissingPermission")
-    public void AdvertiseHID(){
-        if(!advertStartReq) {
+    public void AdvertiseHID() {
+        if (!advertStartReq) {
             bluetoothAdapter.setName("BT_DEBUG");
             advertStartReq = true;
-            StopAdvertiseHID = null;
             BluetoothLeAdvertiser bleAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-            AdvertisingSetCallback advertiseCallback = new AdvertisingSetCallback() {
+            advertiseCallback = new AdvertisingSetCallback() {
                 @Override
-                public void onAdvertisingSetStarted (AdvertisingSet settingsInEffect,int txPower,int status) {
+                public void onAdvertisingSetStarted(AdvertisingSet settingsInEffect, int txPower, int status) {
                     BtManager.this.advertisingSet = settingsInEffect;
                     Log.i("BLEADVERT", String.format("onStartSuccess BLE advertisement : %s", settingsInEffect.toString()));
                     promises.onAdvertisementStateChanged(AppGattService.SERVICE_STATES.ADVERT_ENABLED);
                 }
+
                 @Override
                 public void onAdvertisingSetStopped(AdvertisingSet advertisingSet) {
                     advertStartReq = false;
@@ -100,55 +107,55 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
                     promises.onAdvertisementStateChanged(AppGattService.SERVICE_STATES.ADVERT_DISABLED);
                 }
             };
+            Log.w("ADVERT","Advertising Callbacks created");
             bluetoothAdapter.cancelDiscovery();
             bleAdvertiser.startAdvertisingSet(advertiseSettings, advertiseData, advertiseScanResponse,null,null, advertiseCallback);
-            StopAdvertiseHID = (BtManager btManager)-> {
-                btManager.advertStartReq = false;
-                bleAdvertiser.stopAdvertisingSet(advertiseCallback);
-                StopAdvertiseHID = null;
-                return null;
-            };
         }
     }
     private AdvertiseData advertiseData;
     private AdvertiseData advertiseScanResponse;
     private AdvertisingSetParameters advertiseSettings;
     private AdvertisingSet advertisingSet;
+    @SuppressLint("MissingPermission")
     public void StopAdvertisement(){
-        if(StopAdvertiseHID!=null){
-            StopAdvertiseHID.apply(this);
-        }
+        advertStartReq = false;
+        bluetoothAdapter.getBluetoothLeAdvertiser().stopAdvertisingSet(advertiseCallback);
+        Log.w("CALLBACK","Advertiser called to stop");
     }
     private boolean advertStartReq = false;
+    /** @noinspection rawtypes*/
     @SuppressLint("MissingPermission")
     public void Disconnect(boolean forceBondRemoval){
         detachNotifier();
         for(BluetoothDevice d:ConnectedHost.values()){
             BluetoothDevice bd = ConnectedHost.remove(d.getAddress());
             gattServer.cancelConnection(bd);
-            if(bd.getBondState()==BOND_BONDED && forceBondRemoval){
-                try{
-                    Method method = bd.getClass().getMethod("removeBond",(Class[]) null);
-                    boolean result = (boolean)method.invoke(bd,(Object[])null);
-                    if(result){
-                        Log.w("DISCONN",String.format("Successfully inititated removed bond %s",bd.getAddress()));
+            if (bd != null && bd.getBondState() == BOND_BONDED && forceBondRemoval) {
+                try {
+                    Method method = bd.getClass().getMethod("removeBond", (Class[]) null);
+                    //noinspection DataFlowIssue
+                    boolean result = (boolean) method.invoke(bd, (Object[]) null);
+                    if (result) {
+                        Log.w("DISCONN", String.format("Successfully inititated removed bond %s", bd.getAddress()));
                     }
-                }catch(Exception e){
-                    Log.e("REFLECT",e.toString());
+                } catch (Exception e) {
+                    Log.e("REFLECT", e.toString());
                 }
             }
-            advertStartReq = false;
         }
+        advertStartReq = false;
+
         Log.i("BTMANGER",ConnectedHost.isEmpty()?"Connected Host list is cleaned up":"ConnectedHost did not remove anything");
     }
     @SuppressLint("MissingPermission")
     public void Close(){
         if(this.gattServer!=null){
             detachNotifier();
+            gattServer.clearServices();
+            gattServer.close();
             for(BluetoothDevice d:ConnectedHost.values()){
                 gattServer.cancelConnection(d);
             }
-            gattServer.close();
             gattServer = null;
         }
     }
@@ -187,10 +194,9 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
         this.cReaders.put(UUIDUtil.CHAR_REPORT, new HIDReportCReadRequest(emptyResponse,dataPipe));
         this.cReaders.put(UUIDUtil.CHAR_REPORT_MAP, new HIDReportMapCReadRequest(HID_ReportMap));
         this.cReaders.put(UUIDUtil.CHAR_PROTO_MODE, new HIDProtoModeReadRequest());
-        this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, new HIDReportRRDReadRequest((byte) 0x01, (byte) 0x01,(byte)12));
+        this.dReaders.put(UUIDUtil.DESC_REPORT_REFERENCE, new HIDReportRRDReadRequest((byte) 0x01, (byte) 0x01,(byte)40));
         this.dReaders.put(UUIDUtil.DESC_CCC, new HIDReportCCCDReadRequest());
-        this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL, new BASReadRequest());
-
+        this.cReaders.put(UUIDUtil.CHAR_BATTERY_LEVEL, new BASReadRequest(serviceContext));
         bondedDevices.clear();
         for(Object d: bluetoothAdapter.getBondedDevices().toArray()){
             bondedDevices.add((BluetoothDevice)d);
@@ -216,10 +222,11 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
             attachNotifier(ConnectedHost.get(dAddress));
             promises.onNotifierChanged(AppGattService.SERVICE_STATES.NOTIFY_ATTACHED);
         }catch (Exception e){
-            Log.e("NOTIFY",String.format("Attaching the notifier failed:\n %s",e.toString()));
+            Log.e("NOTIFY",String.format("Attaching the notifier failed:\n %s",e));
             promises.onNotifierChanged(AppGattService.SERVICE_STATES.ACTION_FAIL);
         }
     }
+    private boolean pairingrequest = false;
     public BroadcastReceiver bondStateReceiver() {
         return new BroadcastReceiver() {
             @SuppressLint("MissingPermission")
@@ -255,6 +262,10 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
                         break;
                     case BluetoothDevice.BOND_NONE:
                         Log.w("BOND", String.format("%s was UN-BONDED for an unknown reason", device.getName()));
+                        if(!pairingrequest){
+                            pairingrequest = true;
+                            device.createBond();
+                        }
                         break;
                     default:
                         Log.e("BOND",String.format("GENERIC ERROR parsed in broadcast receiver for device: \n   %s %s\n%s",dname,device.getAddress(),device.getBondState()));
@@ -281,7 +292,7 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
     private Timer NotificationTimer;
     private final BluetoothManager bluetoothManager;
     private final BluetoothAdapter bluetoothAdapter;
-    private BluetoothGattServer gattServer;
+    public BluetoothGattServer gattServer;//TODO privatise after debug
     private final static int INITIAL_SERVICE_ADD = -99;
 
     private final Queue<BluetoothGattService> serviceQueue = new ConcurrentLinkedQueue<>();
@@ -310,7 +321,10 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
             if (device.getBondState() == BOND_NONE) {
                 Log.w("CONN", "%s device is CONNECTED but unpaired - attempting to force a bond");
                 //gattServer.cancelConnection(device);
-                device.createBond();
+                if(!pairingrequest){
+                    pairingrequest = true;
+                    device.createBond();
+                }
                 return;
             }
             if(device.getBondState() == BOND_BONDING){
@@ -319,7 +333,8 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
             }
             if (device.getBondState() == BOND_BONDED) {
                 Log.i("CONN", String.format("New Device Connection State CONNECTED %d - %s", status, device.getAddress()));
-                gattServer.connect(device,true);
+                pairingrequest = false;
+                gattServer.connect(device,false);
                 //promises.onConnectionStateChanged(device.getAddress(), device.getName(), AppGattService.SERVICE_STATES.BLUETOOTH_DEVICE_CONNECTED);
             }
             ConnectedHost.put(device.getAddress(), device);
@@ -402,6 +417,7 @@ public class BtManager extends BluetoothGattServerCallback implements GattServer
         super.onExecuteWrite(device, requestId, execute);
     }
 
+    /** @noinspection SynchronizeOnNonFinalField*/
     @Override
     public void onNotificationSent(BluetoothDevice device, int status) {
         //Log.i("BTMANAGER",String.format("Notification sent %s %d",device.getAddress(),status)); //Remove when reverting to fast poll

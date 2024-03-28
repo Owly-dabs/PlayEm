@@ -1,6 +1,5 @@
 package com.example.playem;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
@@ -14,23 +13,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.example.playem.ViewCallbacks.GattServiceCallbacks;
-import com.example.playem.bluetoothLE.BluetoothPermissionsHandler;
 import com.example.playem.bluetoothLE.BtManager;
-import com.example.playem.bluetoothLE.utils.PermissionHandle;
 import com.example.playem.bluetoothLE.utils.PermissionHandler;
-import com.example.playem.generics.PermissionsHandle;
 import com.example.playem.generics.ServiceHandler;
 import com.example.playem.hid.HIDProfileBuilder;
 import com.example.playem.hid.interfaces.HIDChunk;
@@ -38,6 +31,8 @@ import com.example.playem.pipes.HidBleDataPipe;
 import com.example.playem.viewmodels.GattServiceState;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,22 +46,21 @@ public class AppGattService extends Service{
     @SuppressLint("MissingPermission")
     public void DeferredConstructor(Activity appActivity){ //Get States here
         if(!_constructed){
-            executorPool = Executors.newFixedThreadPool(4);
+            Log.i("CONSTRUCT","INIT Constructor");
+            if(executorPool==null)
+                executorPool = Executors.newSingleThreadExecutor();
             executorPool.execute(()->{
                 bluetoothManager = getBluetoothManager();
-                dataChunks = new HashMap<>();
                 bluetoothAdapter =  bluetoothManager.getAdapter();
                 if(btManager == null){
                     btManager = new BtManager(this,executorPool,mediator,bluetoothManager);
                 }
                 _constructed = true;
-                btPermissionHandler = new BluetoothPermissionsHandler();
-                btPermissionHandler.SetFocusedActivity(appActivity);
-                if(btPermissionHandler.CheckBTPermissions())
+                if(PermissionHandler.Valid)
                     currentState.status = GattServiceState.SERVICE_STATUS.IDLE_NODATA;
                 else
                     Log.e("PERM","Showing as no permissions granted");
-                checkBTEnabled();
+
 
                 String CHANNEL_ID = "playEM_channelID";
                 NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -79,15 +73,10 @@ public class AppGattService extends Service{
                         .setContentTitle("PlayEm BLE")
                         .setContentText("Bluetooth is Running in the Background").build();
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    PermissionHandler connectedDeviceHandler = new PermissionHandler(focusedActivity,"foreground",new PermissionsHandle[]{
-                            new PermissionHandle(Manifest.permission.POST_NOTIFICATIONS)
-                    },btPermissionHandler);
-                    connectedDeviceHandler.RequestMissingPermissions(focusedActivity);
-                }
+
                 int notificationID = 1;
                 this.startForeground(notificationID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
-
+                PermissionHandler.CheckOrRequestBtEnable(appActivity,bluetoothAdapter);
                 mediator.onServiceStatusChanged(null);
             });
         }
@@ -97,14 +86,6 @@ public class AppGattService extends Service{
     public GattServiceState getLastValidState(){
         return currentState.copy(currentState.Objectdirty);
     }
-
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,@NonNull int[] grantResults){
-        executorPool.execute(()->{
-            if(btPermissionHandler!=null){
-                btPermissionHandler.onRequestPermissionsResult(requestCode,permissions,grantResults);
-            }
-        });
-    }
     private final ServiceHandler<Activity,GattServiceCallbacks> activityGattServiceCallback = new ServiceHandler<>(5);
     private boolean _constructed = false;
     private ExecutorService executorPool;
@@ -112,7 +93,6 @@ public class AppGattService extends Service{
     private BtManager btManager;
     public HidBleDataPipe dataPipe;
     private Activity focusedActivity;
-    private HashMap<Integer, HIDChunk> dataChunks;
     private BroadcastReceiver bondStateReceiver;
 
     public void BuildPipe(HIDProfileBuilder builder){
@@ -123,18 +103,9 @@ public class AppGattService extends Service{
         if(_constructed){
             executorPool.execute(()->{
                 this.dataPipe = dataPipe;
-                dataChunks = builder.GetChunks();
                 btManager.GattServerInit(builder.GetReportMap(),new byte[]{},dataPipe);
                 registerReceiver(bondStateReceiver = btManager.bondStateReceiver(),new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
             });
-        }
-    }
-    private void checkBTEnabled() {
-        if (!bluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            if (ActivityCompat.checkSelfPermission(focusedActivity, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                focusedActivity.startActivityForResult(enableBtIntent, -1);//change api if time allows
-            }
         }
     }
     private BluetoothManager getBluetoothManager() {
@@ -148,7 +119,6 @@ public class AppGattService extends Service{
             });
         }
     }
-
     protected void StartInput(String address){
         final int MAX_MAC_LEN = 17;
         if(address.length()> MAX_MAC_LEN){
@@ -164,38 +134,35 @@ public class AppGattService extends Service{
     protected void Disconnect(){
         this.Disconnect(false);
     }
+    @SuppressLint("MissingPermission")
     protected void Disconnect(boolean forceBondRemoval){
         executorPool.execute(()->{
             if(_constructed){
+                unregisterReceiver(bondStateReceiver);
                 btManager.StopAdvertisement();
                 btManager.Disconnect(forceBondRemoval);
                 _constructed = false;
                 dataPipe = null;
                 mediator.onGattStatusChanged(GattServiceState.SERVICE_STATUS.NOT_INIT);
                 btManager = null;
-                DeferredConstructor(this.focusedActivity);
             }
         });
+        Timer t = new Timer();//TODO hook with GUI to sync
+        t.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                DeferredConstructor(AppGattService.this.focusedActivity);
+            }
+        },20000);
     }
-    public HidBleDataPipe GetPipe(){
-        if(dataPipe!=null){
-            return  dataPipe;
-        }
-        return null;
-    }
-    /*protected HashMap<Integer,HIDChunk> GetHidChunks(){
-        return dataChunks;
-    }*/
+
     protected void SubscribeToEventBus(Activity activity,GattServiceCallbacks callbacks){
         activityGattServiceCallback.PutPair(activity,callbacks);
-        if(btPermissionHandler!=null)
-            btPermissionHandler.SetFocusedActivity(activity);
         focusedActivity = activity;
     }
 
     protected void UnsubscribeFromEventBus(Activity activity){
         activityGattServiceCallback.Remove(activity);
-        btPermissionHandler.SetFocusedActivity(null);
         focusedActivity = null;
     }
 
@@ -375,8 +342,6 @@ public class AppGattService extends Service{
         stopForeground(STOP_FOREGROUND_REMOVE);
         super.onDestroy();
     }
-
-    private BluetoothPermissionsHandler btPermissionHandler;
 
 public class mBinder extends Binder{
     AppGattService getService(){
