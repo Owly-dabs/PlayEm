@@ -5,6 +5,8 @@ import java.util.UUID;
 public class UUIDUtil {
     //Characteristics UUID 2A4A onwards
     public static final String BTBaseNumber = "-0000-1000-8000-00805F9B34FB";
+    public static final UUID SERVICE_GAP = UUID.fromString("00001800"+BTBaseNumber);
+    public static final UUID CHAR_LESECURE = UUID.fromString("00002BF5" + BTBaseNumber);
     public static final UUID SERVICE_HID = UUID.fromString("00001812" + BTBaseNumber);
     public static final UUID CHAR_REPORT = UUID.fromString("00002A4D" + BTBaseNumber);
     public static final UUID CHAR_REPORT_MAP = UUID.fromString("00002A4B" + BTBaseNumber);
