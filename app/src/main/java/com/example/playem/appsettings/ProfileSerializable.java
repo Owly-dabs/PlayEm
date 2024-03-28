@@ -42,12 +42,12 @@ public interface ProfileSerializable {
         String dir = context.getFilesDir().getPath()+"/"+ProfilesDir;
         File pro_fir = new File(dir);
         List<String> fl = new ArrayList<>();
-        for(File f : pro_fir.listFiles())
-        {
-            fl.add(f.getName());
-            //Log.e("FILE",f.getName());
+        File[] files =pro_fir.listFiles();
+        if((files != null ? files.length : 0) >0){
+            for(File f : files){
+                fl.add(f.getName());
+            }
         }
-
         return fl;
     }
     static Object GetObjectFromFile(Context context,Type objectType,String name){
@@ -55,10 +55,7 @@ public interface ProfileSerializable {
         if(objectType==ProfileData.class){
             File directory = new File(context.getFilesDir(),ProfilesDir);
             File file = new File(directory, name);
-            try(FileInputStream fis = new FileInputStream(file)){
-                Scanner s = new Scanner(fis).useDelimiter("\\A");
-                String result = s.hasNext() ? s.next() : "";
-                //Log.i("JSON",result);
+            try{
                 return g.fromJson(new JsonReader(new FileReader(file)),objectType);
             }
             catch (Exception e){
