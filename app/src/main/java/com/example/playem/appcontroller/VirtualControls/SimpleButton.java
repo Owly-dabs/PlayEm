@@ -16,10 +16,8 @@ public class SimpleButton extends ControlComponent implements ControlHandler, Bu
     public SimpleButton(){
         super();
     }
-    public SimpleButton(int idxX, int idxY, int pixelsPerStep, int pipeid) {
-        super(idxX, idxY,pixelsPerStep,pipeid);
-        this.widthSteps = 2;
-        this.heightSteps = 2;
+    public SimpleButton(int idxX, int idxY, int width,int height,int pixelsPerStep, int pipeid) {
+        super(idxX, idxY,width<1?2:width,height<1?2:height,pixelsPerStep,pipeid);
         outerRingPobj.setColor(Color.BLUE);
         innerPobj.setColor(Color.RED);
         innerPressedPobj.setColor(Color.RED);

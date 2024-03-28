@@ -18,10 +18,8 @@ public class ThumbStick extends ControlComponent implements ControlHandler , Bui
     public ThumbStick(){
         super();
     }
-    public ThumbStick(int idxX, int idxY, int pixelsPerStep, int pipeid) {
-        super(idxX, idxY,pixelsPerStep,pipeid);
-        this.widthSteps=5;
-        this.heightSteps=5;
+    public ThumbStick(int idxX, int idxY, int width,int height,int pixelsPerStep, int pipeid) {
+        super(idxX, idxY,width<1?5:width,height<1?5:height,pixelsPerStep,pipeid);
         this.basePobj = new Paint();
         this.pointyPobj = new Paint();
         basePobj.setColor(Color.WHITE);
