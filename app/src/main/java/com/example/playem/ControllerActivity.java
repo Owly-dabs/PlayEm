@@ -38,7 +38,7 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
     private Button AddTS,AddB,AddTB,AddGyro;
     private Button ControlOptions,RemoveControl,DownSize,UpSize;
     private Button AcceptEdit,HIDBuild,AdvertButton;
-    private Button LoadP,SaveP;
+    private Button LoadP,SaveP,DCButton,XButton;
     private LinearLayout AddCom,ControlOptionLayout,MenuLayout;
     private LinearLayout EditOptionLayout;
     private float screenWidth;
@@ -75,7 +75,7 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
 
         setContentView(R.layout.activity_control);
 
-        controlView = new ControllerReactiveView(this,new ControlGrid(this,0.25f,ControlGrid.ORIENTATION_POTRAIT),r);
+        controlView = new ControllerReactiveView(this,new ControlGrid(this,0.25f,ControlGrid.ORIENTATION_POTRAIT),r,this);
         FrameLayout fl = findViewById(R.id.cGridLayout);
         fl.addView(controlView);
         findViewById(R.id.cOverlay).setZ(1f);
@@ -94,8 +94,10 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
         AcceptEdit = findViewById(R.id.bDoneEdits);
         DownSize = findViewById(R.id.bResizeDown);
         HIDBuild = findViewById(R.id.buildButton);
-        AdvertButton = findViewById(R.id.AdvertiseButton);
-        SaveP = findViewById(R.id.loadButton);
+        SaveP = findViewById(R.id.AdvertiseButton);
+        LoadP = findViewById(R.id.loadButton);
+        DCButton = findViewById(R.id.bRemoveBond);
+        XButton = findViewById(R.id.exitButton);
         setClickiesSide();
     }
 
@@ -134,38 +136,39 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
             HideControlEditOptions();
         });
         HIDBuild.setOnClickListener((View v)->{
-            HideAllBuildOptions();
             controlView.FinalizeAndBuildAll(gattService);
+            controlView.SwitchToPlay();
         });
-        AdvertButton.setOnClickListener((View v)->{
+/*        AdvertButton.setOnClickListener((View v)->{
             gattService.StartAdvertisement();
             controlView.SwitchToPlay();
-            HideAllBuildOptions();
-        });
+            HideAllOptions();
+        });*/
         SaveP.setOnClickListener((View v)->{
-            controlView.SaveProfile("new_def");
+            controlView.SaveProfile("autosave_cache");
+        });
+        LoadP.setOnClickListener((View v)->{
+            runOnUiThread(()-> {
+                controlView.LoadProfile("autosave_cache");
+            });
+        });
+        DCButton.setOnClickListener((View v)->{
+            disconnecting = true;
+            gattService.Disconnect(true);
+
+        });
+        XButton.setOnClickListener((View v)->{
+            HideAllOptions();
         });
 
     }
+    private boolean disconnecting=false;
     @Override
     protected void onStart() {
         super.onStart();
         bindService();
-        Timer t = new Timer();
-        t.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(()-> ControllerActivity.this.HideAllBuildOptions());
-            }
-        },1000);
     }
 
-    private void HideAllBuildOptions(){
-        HideComponentAdd();
-        HideControlOptions();
-        HideControlEditOptions();
-        HideMenuOptions();
-    }
     protected void onPause(){
         super.onPause();
         Log.i("APP","onPause entered");
@@ -230,8 +233,18 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
     private AppGattService gattService;
     private void UpdateViewFromGattState(GattServiceState newState){
         Log.i("STATE",String.format("New State %s",newState.status.toString()));
-        if(newState.status.ordinal() == GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()){
+        if(newState.status.ordinal()==GattServiceState.SERVICE_STATUS.BUILT_READY_BROADCAST.ordinal()&& !disconnecting)
+            gattService.StartAdvertisement();
+        if(newState.status.ordinal() == GattServiceState.SERVICE_STATUS.CONNECTED_IDLE.ordinal()&&!disconnecting)
             gattService.StartInput(newState.address);
+        if(newState.status.ordinal()==GattServiceState.SERVICE_STATUS.NOTIFY.ordinal()){
+            Timer t = new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    HideAllOptions();
+                }
+            },5000);
         }
     }
 
@@ -251,7 +264,6 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.w("BINDER","Service Disconnect was called");
-
             isBound = false;
             gattService= null;
         }
@@ -267,6 +279,22 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
             //Log.w("BINDER","Hide");
 
         });
+    }
+    @Override
+    public void HideAllOptions(){
+        Log.w("CALLBACK","Hide All Called");
+        HideMenuOptions();
+        HideComponentAdd();
+        HideControlOptions();
+        HideControlEditOptions();
+    }
+    @Override
+    public void ShowAllOptions(){
+        Log.w("CALLBACK","Show All Called");
+        ShowMenuOptions();
+        ShowComponentAdd();
+        ShowControlOptions();
+        ShowControlEditOptions();
     }
 
     @Override
@@ -312,7 +340,7 @@ public class ControllerActivity extends AppCompatActivity implements BuildableVi
             ObjectAnimator animation = ObjectAnimator.ofFloat(MenuLayout, "translationX", 0f);
             animation.setDuration(500);
             animation.start();
-            //Log.w("BINDER","Show");
+            Log.w("BINDER","Show");
         });
     }
 
