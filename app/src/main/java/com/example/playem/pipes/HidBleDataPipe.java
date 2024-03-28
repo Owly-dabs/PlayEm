@@ -12,8 +12,8 @@ import java.util.List;
 //Always takes abs vals from calls assumes last input always
 //This class acts as the de-coupler between GUI and BLE Stack
 //TODO Refactor for multi virtual device
-public class PlayEmDataPipe {
-    public PlayEmDataPipe(HashMap<Integer,HIDChunk> chunks){
+public class HidBleDataPipe {
+    public HidBleDataPipe(HashMap<Integer,HIDChunk> chunks){
         //Assumes only report id 0 is active and not report id is not sent to host
         //Implements by copy full byte arrays
         HIDChunk bChunk;
